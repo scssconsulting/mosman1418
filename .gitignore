@@ -1,20 +1,24 @@
 *.pyc
 # rstools
-admin
+#admin
 # awmtools
-ckeditor
-css
+#ckeditor
+#css
 # cwgctools
-django_extensions
-img
-js
-less
+#django_extensions
+#img
+#js
+#less
 # moatools
 
 # VScode Editor
 .history
 .vscode/
-media/
-static/
+#media/
+#static/
 # Don't ever push settings_prod in git repo
 settings_prod.py
+
+db.sqlite3
+**/.idea/**
+**/__pycache__/**
