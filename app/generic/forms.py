@@ -1,6 +1,7 @@
 from django import forms
 from django.forms import ModelForm
 from django.forms.widgets import SelectDateWidget
+
 from calendar import monthrange
 
 YEARS = [year for year in range(1850, 2013)]
@@ -13,14 +14,18 @@ class NewSelectDateWidget(SelectDateWidget):
 class AddPersonForm(ModelForm):
     years = [year for year in range(1850, 1950)]
 
-    birth_earliest_date = forms.CharField(widget=NewSelectDateWidget(attrs={'class': 'input-small'}, years=years), required=False)
-    birth_latest_date = forms.CharField(widget=NewSelectDateWidget(attrs={'class': 'input-small'}, years=years), required=False)
+    birth_earliest_date = forms.CharField(widget=NewSelectDateWidget(attrs={'class': 'input-small'}, years=years),
+                                          required=False)
+    birth_latest_date = forms.CharField(widget=NewSelectDateWidget(attrs={'class': 'input-small'}, years=years),
+                                        required=False)
     birth_earliest_month_known = forms.BooleanField(widget=forms.HiddenInput, required=False)
     birth_earliest_day_known = forms.BooleanField(widget=forms.HiddenInput, required=False)
     birth_latest_month_known = forms.BooleanField(widget=forms.HiddenInput, required=False)
     birth_latest_day_known = forms.BooleanField(widget=forms.HiddenInput, required=False)
-    death_earliest_date = forms.CharField(widget=NewSelectDateWidget(attrs={'class': 'input-small'}, years=years), required=False)
-    death_latest_date = forms.CharField(widget=NewSelectDateWidget(attrs={'class': 'input-small'}, years=years), required=False)
+    death_earliest_date = forms.CharField(widget=NewSelectDateWidget(attrs={'class': 'input-small'}, years=years),
+                                          required=False)
+    death_latest_date = forms.CharField(widget=NewSelectDateWidget(attrs={'class': 'input-small'}, years=years),
+                                        required=False)
     death_earliest_month_known = forms.BooleanField(widget=forms.HiddenInput, required=False)
     death_earliest_day_known = forms.BooleanField(widget=forms.HiddenInput, required=False)
     death_latest_month_known = forms.BooleanField(widget=forms.HiddenInput, required=False)
@@ -88,22 +93,22 @@ class AddPersonForm(ModelForm):
         return False if int(day) == 0 else True
 
 
-class DateSelectMixin(object):
-    def clean_date(self, date, type):
+class DateSelectMixin:
+    def clean_date(self, date, typ):
         if date:
             year, month, day = date.split('-')
             if int(month) == 0:
-                if type == 'start':
+                if typ == 'start':
                     month = '1'
                     day = '1'
-                elif type == 'end':
+                elif typ == 'end':
                     month = '12'
                     day = '31'
             else:
                 if int(day) == 0:
-                    if type == 'start':
+                    if typ == 'start':
                         day = '1'
-                    elif type == 'end':
+                    elif typ == 'end':
                         day = monthrange(int(year), int(month))[1]
             if int(year) == 0:
                 date = None
@@ -113,7 +118,7 @@ class DateSelectMixin(object):
             date = None
         return date
 
-    def clean_month(self, date, type):
+    def clean_month(self, date, typ):
         if date:
             year, month, day = date.split('-')
             status = False if int(month) == 0 else True
@@ -121,7 +126,7 @@ class DateSelectMixin(object):
             status = True
         return status
 
-    def clean_day(self, date, type):
+    def clean_day(self, date, typ):
         if date:
             year, month, day = date.split('-')
             status = False if int(day) == 0 else True
@@ -130,7 +135,7 @@ class DateSelectMixin(object):
         return status
 
 
-class ShortDateForm(ModelForm, DateSelectMixin):
+class ShortDateForm(DateSelectMixin, ModelForm):
     start_earliest_date = forms.CharField(widget=NewSelectDateWidget(
         attrs={'class': 'input-small'},
         years=YEARS), required=False)
@@ -151,21 +156,29 @@ class ShortDateForm(ModelForm, DateSelectMixin):
         return cleaned_data
 
 
-class AddEventForm(ModelForm, DateSelectMixin):
+class AddEventForm(DateSelectMixin, ModelForm):
     years = [year for year in range(1850, 2013)]
-    # These are CharFields so they don't get vaildated as dates
-    start_earliest_date = forms.CharField(widget=NewSelectDateWidget(
-                                attrs={'class': 'input-small'},
-                                years=years), required=False)
-    start_latest_date = forms.CharField(widget=NewSelectDateWidget(
-                                attrs={'class': 'input-small'},
-                                years=years), required=False)
-    end_earliest_date = forms.CharField(widget=NewSelectDateWidget(
-                                attrs={'class': 'input-small'},
-                                years=years), required=False)
-    end_latest_date = forms.CharField(widget=NewSelectDateWidget(
-                                attrs={'class': 'input-small'},
-                                years=years), required=False)
+    # These are CharFields so they don't get validated as dates
+    start_earliest_date = forms.CharField(
+        widget=NewSelectDateWidget(
+            attrs={'class': 'input-small'},
+            years=years
+        ), required=False)
+    start_latest_date = forms.CharField(
+        widget=NewSelectDateWidget(
+            attrs={'class': 'input-small'},
+            years=years
+        ), required=False)
+    end_earliest_date = forms.CharField(
+        widget=NewSelectDateWidget(
+            attrs={'class': 'input-small'},
+            years=years
+        ), required=False)
+    end_latest_date = forms.CharField(
+        widget=NewSelectDateWidget(
+            attrs={'class': 'input-small'},
+            years=years
+        ), required=False)
 
     def clean(self):
         cleaned_data = super(AddEventForm, self).clean()

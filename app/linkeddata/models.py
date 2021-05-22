@@ -1,7 +1,5 @@
 from django.db import models
 
-# Create your models here.
-
 
 class RDFSchema(models.Model):
     prefix = models.CharField(max_length=20)
@@ -29,7 +27,7 @@ class RDFClass(models.Model):
 
 
 class RDFRelationship(models.Model):
-    '''Generic relationship.'''
+    """Generic relationship."""
     label = models.CharField(max_length=50)
     inverse_label = models.CharField(max_length=50, blank=True, null=True)
     rdf_property = models.ManyToManyField('linkeddata.RDFProperty', blank=True)
@@ -42,7 +40,7 @@ class RDFRelationship(models.Model):
 
 
 class RDFType(models.Model):
-    '''Generic type.'''
+    """Generic type."""
     label = models.CharField(max_length=50)
     rdf_class = models.ManyToManyField('linkeddata.RDFClass', blank=True)
 
@@ -51,4 +49,3 @@ class RDFType(models.Model):
 
     class Meta:
         abstract = True
-

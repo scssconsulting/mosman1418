@@ -209,6 +209,7 @@ class AddAddress(CreateView):
             self.entity = None
         return HttpResponseRedirect(self.get_success_url())
 
+
     def get_success_url(self):
         if self.entity:
             url = reverse_lazy('personaddress-update', args=[self.entity.id])

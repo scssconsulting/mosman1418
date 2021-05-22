@@ -1,25 +1,24 @@
 import datetime
+
 from django import forms
 from django.forms import ModelForm
+from django.forms.widgets import SelectDateWidget
+
+from ckeditor.widgets import CKEditorWidget
+from django_select2.forms import (
+    ModelSelect2Widget, ModelSelect2MultipleWidget
+)
+
 from app.people.models import *
 from app.places.models import *
 from app.sources.models import *
-from django.forms.widgets import SelectDateWidget
-from ckeditor.widgets import CKEditorWidget
-from calendar import monthrange
-from django.conf import settings
-from django.forms.models import inlineformset_factory
-from django_select2.forms import (
-    ModelSelect2Widget, Select2Widget, ModelSelect2MultipleWidget
-)
-
 from app.generic.forms import AddEventForm, DateSelectMixin, ShortDateForm
-from app.places.forms import AddAddressForm
 
 
 def get_range_upper_year():
     now = datetime.datetime.now().year
     return now + 1
+
 
 YEARS = [year for year in range(1850, get_range_upper_year())]
 
@@ -62,10 +61,10 @@ class EventLocationsMultiChoice(ModelSelect2MultipleWidget):
     search_fields = ['label__icontains', ]
 
 
-class AddPersonForm(ModelForm, DateSelectMixin):
-    # These are CharFields so they don't get vaildated as dates
+class AddPersonForm(DateSelectMixin, ModelForm):
+    # These are CharFields so they don't get validated as dates
     related_person = forms.ModelChoiceField(
-        queryset=PersonAssociatedPerson.objects.all(),
+        queryset=PersonAssociatedPerson.objects.select_related('person', 'associated_person', 'association'),
         required=False,
         widget=forms.Select(attrs={'readonly': 'readonly'})
     )
@@ -124,7 +123,8 @@ class AddPersonForm(ModelForm, DateSelectMixin):
             'notes': CKEditorWidget(attrs={'class': 'input-xlarge'}),
             'mosman_connection': forms.Textarea(attrs={
                 'class': 'input-xlarge',
-                'rows': '4'})
+                'rows': '4'
+            })
         }
 
 
@@ -133,7 +133,6 @@ class UpdatePersonForm(AddPersonForm):
 
 
 class ApprovePersonForm(ModelForm):
-
     class Meta:
         model = Person
         fields = ('status',)
@@ -155,7 +154,8 @@ class AddAltNameForm(ModelForm):
 class AddLifeEventForm(AddEventForm):
     person = PersonChoice()
     sources = SourcesMultiChoice(required=False)
-    #event_type = forms.ModelChoiceField(queryset=LifeEventType.objects.all(), required=False)
+
+    # event_type = forms.ModelChoiceField(queryset=LifeEventType.objects.all(), required=False)
 
     class Meta:
         model = LifeEvent
@@ -250,7 +250,8 @@ class AddOrganisationForm(ShortDateForm):
 class AddAssociatedPersonForm(ShortDateForm):
     person = PersonChoice()
     associated_person = PersonChoice(required=False)
-    sources = SourcesMultiChoice(required=False)
+
+    # sources = SourcesMultiChoice(required=False)
 
     class Meta:
         model = PersonAssociatedPerson
@@ -313,8 +314,8 @@ class PersonMergeForm(forms.Form):
         queryset=Person.objects.all(),
         widget=forms.Select(attrs={'readonly': 'readonly'})
     )
-    master_record =  forms.ModelChoiceField(
-        queryset= Person.objects.all(),
+    master_record = forms.ModelChoiceField(
+        queryset=Person.objects.all(),
         widget=forms.Select()
     )
 

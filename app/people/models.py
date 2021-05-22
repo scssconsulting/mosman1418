@@ -1,10 +1,11 @@
-import re
 from itertools import chain
+
 from django.db import models
-from django.contrib.auth.models import User
 from django.urls import reverse
-from app.linkeddata.models import RDFClass, RDFRelationship, RDFType
-from app.generic.models import StandardMetadata, Event, Period, Person as GenericPerson, Group, ShortDateMixin, LongDateMixin
+from django.contrib.auth.models import User
+
+from app.linkeddata.models import RDFRelationship, RDFType
+from app.generic.models import StandardMetadata, Event, Period, Person as GenericPerson, Group, ShortDateMixin
 
 
 class Person(GenericPerson):
@@ -14,11 +15,13 @@ class Person(GenericPerson):
     gender = models.CharField(max_length=10, blank=True, choices=(('male', 'male'), ('female', 'female')))
     last_rank = models.CharField(max_length=50, blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
-    #roles = models.ManyToManyField('PersonRole')
-    addresses = models.ManyToManyField('places.Address', blank=True,through='PersonAddress')
-    associated_places = models.ManyToManyField('places.Place', blank=True,through='PersonAssociatedPlace')
-    associated_people = models.ManyToManyField('Person', blank=True, through='PersonAssociatedPerson', related_name='related_people')
-    associated_organisations = models.ManyToManyField('Organisation', blank=True,  through='PersonAssociatedOrganisation')
+    # roles = models.ManyToManyField('PersonRole')
+    addresses = models.ManyToManyField('places.Address', blank=True, through='PersonAddress')
+    associated_places = models.ManyToManyField('places.Place', blank=True, through='PersonAssociatedPlace')
+    associated_people = models.ManyToManyField('Person', blank=True, through='PersonAssociatedPerson',
+                                               related_name='related_people')
+    associated_organisations = models.ManyToManyField('Organisation', blank=True,
+                                                      through='PersonAssociatedOrganisation')
     associated_events = models.ManyToManyField('events.Event', blank=True, through='PersonAssociatedEvent')
     associated_objects = models.ManyToManyField('objects.Object', blank=True, through='PersonAssociatedObject')
     associated_sources = models.ManyToManyField('sources.Source', blank=True, through='PersonAssociatedSource')
@@ -116,7 +119,7 @@ class Person(GenericPerson):
 class Rank(StandardMetadata, ShortDateMixin):
     person = models.ForeignKey('Person', on_delete=models.CASCADE)
     rank = models.CharField(max_length=100)
-    #sources = models.ManyToManyField('sources.Source', blank=True)
+    # sources = models.ManyToManyField('sources.Source', blank=True)
     memorials = models.ManyToManyField('memorials.Memorial', blank=True)
 
     def __str__(self):
@@ -153,7 +156,8 @@ class Rank(StandardMetadata, ShortDateMixin):
 class ServiceNumber(StandardMetadata):
     person = models.ForeignKey('Person', on_delete=models.CASCADE)
     service_number = models.CharField(max_length=100)
-    #sources = models.ManyToManyField('sources.Source', blank=True)
+
+    # sources = models.ManyToManyField('sources.Source', blank=True)
 
     def __str__(self):
         return '{} had service number {}'.format(self.person, self.service_number)
@@ -171,7 +175,7 @@ class AlternativePersonName(StandardMetadata):
     other_names = models.CharField(max_length=100, blank=True)
     display_name = models.CharField(max_length=250)
     nickname = models.CharField(max_length=100, blank=True)
-    #sources = models.ManyToManyField('sources.Source', blank=True)
+    # sources = models.ManyToManyField('sources.Source', blank=True)
     memorials = models.ManyToManyField('memorials.Memorial', blank=True)
 
     def __str__(self):
@@ -205,14 +209,14 @@ class AlternativePersonName(StandardMetadata):
 class LifeEvent(Event):
     person = models.ForeignKey('people.Person', on_delete=models.CASCADE)
     locations = models.ManyToManyField('places.Place', blank=True, through='EventLocation')
-    #sources = models.ManyToManyField('sources.Source', blank=True)
+    # sources = models.ManyToManyField('sources.Source', blank=True)
     type_of_event = models.ForeignKey('people.LifeEventType', on_delete=models.CASCADE, blank=True, null=True)
     memorials = models.ManyToManyField('memorials.Memorial', blank=True)
 
     def __str__(self):
         return '{} {} {}'.format(
             self.person,
-            '{}{}'.format()  if self.label[0] else '',
+            '{}{}'.format() if self.label[0] else '',
             '({})'.format(self.date_summary()) if self.date_summary() else ''
         )
 
@@ -279,7 +283,8 @@ class LifePeriod(Period):
 class Birth(Event):
     person = models.ForeignKey('people.Person', on_delete=models.CASCADE)
     location = models.ForeignKey('places.Place', on_delete=models.CASCADE, blank=True, null=True)
-    #sources = models.ManyToManyField('sources.Source', blank=True)
+
+    # sources = models.ManyToManyField('sources.Source', blank=True)
 
     def __str__(self):
         earliest = self.formatted_date('start_earliest')
@@ -325,8 +330,9 @@ class Death(Event):
     person = models.ForeignKey('people.Person', on_delete=models.CASCADE)
     location = models.ForeignKey('places.Place', on_delete=models.CASCADE, blank=True, null=True)
     cause_of_death = models.CharField(max_length=200, blank=True, null=True)
-    burial_place = models.ForeignKey('places.Place', on_delete=models.CASCADE, blank=True, null=True, related_name='burial_place')
-    #sources = models.ManyToManyField('sources.Source', blank=True)
+    burial_place = models.ForeignKey('places.Place', on_delete=models.CASCADE, blank=True, null=True,
+                                     related_name='burial_place')
+    # sources = models.ManyToManyField('sources.Source', blank=True)
     memorials = models.ManyToManyField('memorials.Memorial', blank=True)
 
     def __str__(self):
@@ -347,7 +353,7 @@ class Death(Event):
     def summary(self):
         earliest = self.formatted_date('start_earliest')
         latest = self.formatted_date('start_latest')
-        
+
         if earliest:
             if earliest and latest:
                 summary = 'Between {} and {}'.format(earliest, latest)
@@ -469,7 +475,8 @@ class PersonRole(RDFRelationship):
 class PersonAddress(StandardMetadata, ShortDateMixin):
     person = models.ForeignKey('Person', on_delete=models.CASCADE)
     address = models.ForeignKey('places.Address', on_delete=models.CASCADE)
-    #sources = models.ManyToManyField('sources.Source', blank=True)
+
+    # sources = models.ManyToManyField('sources.Source', blank=True)
 
     def __str__(self):
         return '{} lived at {}'.format(self.person, self.address)
@@ -492,9 +499,11 @@ class PersonAssociatedPlace(models.Model):
 
 class PersonAssociatedPerson(StandardMetadata, ShortDateMixin):
     person = models.ForeignKey('Person', on_delete=models.CASCADE)
-    associated_person = models.ForeignKey('Person', on_delete=models.CASCADE, related_name='related_person', blank=True, null=True)
+    associated_person = models.ForeignKey('Person', on_delete=models.CASCADE, related_name='related_person', blank=True,
+                                          null=True)
     association = models.ForeignKey('PersonAssociation', on_delete=models.CASCADE)
-    #sources = models.ManyToManyField('sources.Source', blank=True)
+
+    # sources = models.ManyToManyField('sources.Source', blank=True)
 
     def __str__(self):
         if self.associated_person:
@@ -517,7 +526,7 @@ class PersonAssociatedOrganisation(StandardMetadata, ShortDateMixin):
     person = models.ForeignKey('Person', on_delete=models.CASCADE)
     organisation = models.ForeignKey('Organisation', on_delete=models.CASCADE)
     association = models.ForeignKey('PersonOrgAssociation', on_delete=models.CASCADE, null=True, blank=True)
-    #sources = models.ManyToManyField('sources.Source', blank=True)
+    # sources = models.ManyToManyField('sources.Source', blank=True)
     memorials = models.ManyToManyField('memorials.Memorial', blank=True)
 
     def __str__(self):
@@ -587,5 +596,5 @@ class OrganisationAssociatedSource(StandardMetadata):
 
 
 class LifeEventType(RDFType):
-    ''' Tyep of life event '''
+    """ Type of life event """
     pass

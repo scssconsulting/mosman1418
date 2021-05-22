@@ -1,95 +1,82 @@
-# Create your views here.
-from django.shortcuts import render_to_response, render, get_object_or_404
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.contrib.sites.models import Site
-from django.views.generic.edit import FormView
-import json
-from django.http import HttpResponse, HttpResponseRedirect
-from guardian.decorators import permission_required
-from guardian.mixins import LoginRequiredMixin, PermissionRequiredMixin
-from django.urls import reverse, reverse_lazy
-from django.contrib.contenttypes.models import ContentType
-from django.views.generic.base import TemplateView
-from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormView
+from django.urls import reverse_lazy
 from django.views.generic import ListView
+from django.http import HttpResponseRedirect
+from django.contrib.sites.models import Site
+from django.views.generic.base import TemplateView
 from django.utils.decorators import method_decorator
-from calendar import monthrange
-import re
-from urllib.request import Request, urlopen, URLError, HTTPError
-from bs4 import BeautifulSoup
-import mechanize
+from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormView
+
+from guardian.shortcuts import assign_perm
+from guardian.decorators import permission_required
+from guardian.mixins import PermissionRequiredMixin
 
 from rdflib import Graph
-from rdflib import Namespace, BNode, Literal, RDF, URIRef
+from rdflib import Namespace, Literal, URIRef
 
-from guardian.shortcuts import assign
-
-from app.linkeddata.views import LinkedDataView, LinkedDataListView, RDFSchema
-from app.people.models import *
+import settings
 from app.people.forms import *
-from app.sources.models import Source
 from app.memorials.models import *
+from app.linkeddata.views import LinkedDataView, LinkedDataListView, RDFSchema
 
 
-TROVE_API_KEY = 'ierj9cpsh7f5u7kg'
+# TROVE_API_KEY = 'ierj9cpsh7f5u7kg'
 
 
-def check_date(date, type):
-    month_known = True
-    day_known = True
-    year, month, day = date.split('-')
-    if int(month) == 0:
-        month_known = False
-        day_known = False
-        if type == 'start':
-            month = '01'
-            day = '01'
-        elif type == 'end':
-            month = '12'
-            day = '31'
-    else:
-        if int(day) == 0:
-            day_known = False
-            if type == 'start':
-                day = '01'
-            elif type == 'end':
-                day = monthrange(int(year), int(month))[1]
-    return {'date': '%s-%s-%s' % (year, month, day), 'month_known': month_known, 'day_known': day_known}
+# def check_date(date, typ):
+#     month_known = True
+#     day_known = True
+#     year, month, day = date.split('-')
+#     if int(month) == 0:
+#         month_known = False
+#         day_known = False
+#         if type == 'start':
+#             month = '01'
+#             day = '01'
+#         elif type == 'end':
+#             month = '12'
+#             day = '31'
+#     else:
+#         if int(day) == 0:
+#             day_known = False
+#             if type == 'start':
+#                 day = '01'
+#             elif type == 'end':
+#                 day = monthrange(int(year), int(month))[1]
+#     return {'date': '%s-%s-%s' % (year, month, day), 'month_known': month_known, 'day_known': day_known}
 
 
-def get_naa_details(barcode):
-    br = mechanize.Browser()
-    br.addheaders = [('User-agent', 'Mozilla/5.0 (Windows; U; Windows NT 6.0; en-US; rv:1.9.0.6')]
-    br.set_handle_robots(False)
-    url = 'http://www.naa.gov.au/cgi-bin/Search?O=I&Number=%s' % barcode
-    response1 = br.open(url)
-    # Recordsearch returns a page with a form that submits on page load.
-    # Have to make sure the session id is submitted with the form.
-    # Extract the session id.
-    session_id = re.search(r"value={(.*)}", response1.read()).group(1)
-    br.select_form(name="t")
-    br.form.set_all_readonly(False)
-    # Add session id to the form.
-    br.form['NAASessionID'] = '{%s}' % session_id
-    response2 = br.submit()
-    soup = BeautifulSoup(response2.read())
-    try:
-        series = unicode(soup.find('div', text='Series number').parent.next_sibling.next_sibling.a.string)
-        control = unicode(soup.find('div', text='Control symbol').parent.next_sibling.next_sibling.string)
-        title = unicode(soup.find('div', text='Title').parent.next_sibling.next_sibling.string)
-    except AttributeError:
-        raise Http404
-    return {'series': series, 'control': control, 'title': title}
+# def get_naa_details(barcode):
+#     br = mechanize.Browser()
+#     br.addheaders = [('User-agent', 'Mozilla/5.0 (Windows; U; Windows NT 6.0; en-US; rv:1.9.0.6')]
+#     br.set_handle_robots(False)
+#     url = 'http://www.naa.gov.au/cgi-bin/Search?O=I&Number=%s' % barcode
+#     response1 = br.open(url)
+#     # Recordsearch returns a page with a form that submits on page load.
+#     # Have to make sure the session id is submitted with the form.
+#     # Extract the session id.
+#     session_id = re.search(r"value={(.*)}", response1.read()).group(1)
+#     br.select_form(name="t")
+#     br.form.set_all_readonly(False)
+#     # Add session id to the form.
+#     br.form['NAASessionID'] = '{%s}' % session_id
+#     response2 = br.submit()
+#     soup = BeautifulSoup(response2.read())
+#     try:
+#         series = unicode(soup.find('div', text='Series number').parent.next_sibling.next_sibling.a.string)
+#         control = unicode(soup.find('div', text='Control symbol').parent.next_sibling.next_sibling.string)
+#         title = unicode(soup.find('div', text='Title').parent.next_sibling.next_sibling.string)
+#     except AttributeError:
+#         raise Http404
+#     return {'series': series, 'control': control, 'title': title}
 
-
-def prepare_date(date, month_known, day_known):
-    year, month, day = date.isoformat().split('-')
-    if month_known == False:
-        month = '0'
-    if day_known == False:
-        day = '0'
-    return '%s-%s-%s' % (year, month, day)
-
+# def prepare_date(date, month_known, day_known):
+#     year, month, day = date.isoformat().split('-')
+#     if month_known is False:
+#         month = '0'
+#     if day_known is False:
+#         day = '0'
+#     return '%s-%s-%s' % (year, month, day)
+#
 
 class PersonView(LinkedDataView):
     model = Person
@@ -104,7 +91,7 @@ class PersonView(LinkedDataView):
             namespace = Namespace(schema.uri)
             graph.bind(schema.prefix, namespace)
             namespaces[schema.prefix] = namespace
-        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain))
+        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain,))
         this_person = URIRef(host_ns[entity.get_absolute_url()])
         graph.add((this_person, namespaces['rdf']['type'], namespaces['foaf']['Person']))
         graph.add((this_person, namespaces['rdfs']['label'], Literal(str(entity))))
@@ -114,7 +101,8 @@ class PersonView(LinkedDataView):
             graph.add((this_person, namespaces['foaf']['givenName'], Literal(entity.other_names)))
         if entity.memorialname_set.all():
             for memorialname in entity.memorialname_set.all():
-                graph.add((this_person, namespaces['graves']['commemorated_by'], URIRef(host_ns[memorialname.memorial.get_absolute_url()])))
+                graph.add((this_person, namespaces['graves']['commemorated_by'],
+                           URIRef(host_ns[memorialname.memorial.get_absolute_url()])))
         for story in entity.stories.all():
             graph.add((this_person, namespaces['foaf']['page'], URIRef(host_ns[story.get_absolute_url()])))
         return graph
@@ -133,7 +121,7 @@ class PersonPhotosView(LinkedDataView):
             namespace = Namespace(schema.uri)
             graph.bind(schema.prefix, namespace)
             namespaces[schema.prefix] = namespace
-        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain))
+        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain,))
         this_person = URIRef(host_ns[entity.get_absolute_url()])
         graph.add((this_person, namespaces['rdf']['type'], namespaces['foaf']['Person']))
         graph.add((this_person, namespaces['rdfs']['label'], Literal(str(entity))))
@@ -143,7 +131,8 @@ class PersonPhotosView(LinkedDataView):
             graph.add((this_person, namespaces['foaf']['givenName'], Literal(entity.other_names)))
         if entity.memorialname_set.all():
             for memorialname in entity.memorialname_set.all():
-                graph.add((this_person, namespaces['graves']['commemorated_by'], URIRef(host_ns[memorialname.memorial.get_absolute_url()])))
+                graph.add((this_person, namespaces['graves']['commemorated_by'],
+                           URIRef(host_ns[memorialname.memorial.get_absolute_url()])))
         for story in entity.stories.all():
             graph.add((this_person, namespaces['foaf']['page'], URIRef(host_ns[story.get_absolute_url()])))
         return graph
@@ -164,7 +153,7 @@ class PersonListView(LinkedDataListView):
             namespace = Namespace(schema.uri)
             graph.bind(schema.prefix, namespace)
             namespaces[schema.prefix] = namespace
-        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain))
+        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain,))
         for entity in entities:
             this_person = URIRef(host_ns[entity.get_absolute_url()])
             graph.add((this_person, namespaces['rdf']['type'], namespaces['foaf']['Person']))
@@ -198,7 +187,7 @@ class AltNameView(LinkedDataView):
             namespace = Namespace(schema.uri)
             graph.bind(schema.prefix, namespace)
             namespaces[schema.prefix] = namespace
-        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain))
+        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain,))
         this_person = URIRef(host_ns[entity.get_absolute_url()])
         graph.add((this_person, namespaces['rdf']['type'], namespaces['foaf']['Person']))
         graph.add((this_person, namespaces['rdfs']['label'], Literal(str(entity))))
@@ -218,7 +207,7 @@ class BirthView(LinkedDataView):
             namespace = Namespace(schema.uri)
             graph.bind(schema.prefix, namespace)
             namespaces[schema.prefix] = namespace
-        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain))
+        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain,))
         this_person = URIRef(host_ns[entity.get_absolute_url()])
         graph.add((this_person, namespaces['rdf']['type'], namespaces['foaf']['Person']))
         graph.add((this_person, namespaces['rdfs']['label'], Literal(str(entity))))
@@ -238,7 +227,7 @@ class DeathView(LinkedDataView):
             namespace = Namespace(schema.uri)
             graph.bind(schema.prefix, namespace)
             namespaces[schema.prefix] = namespace
-        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain))
+        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain,))
         this_person = URIRef(host_ns[entity.get_absolute_url()])
         graph.add((this_person, namespaces['rdf']['type'], namespaces['foaf']['Person']))
         graph.add((this_person, namespaces['rdfs']['label'], Literal(str(entity))))
@@ -258,7 +247,7 @@ class LifeEventView(LinkedDataView):
             namespace = Namespace(schema.uri)
             graph.bind(schema.prefix, namespace)
             namespaces[schema.prefix] = namespace
-        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain))
+        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain,))
         this_person = URIRef(host_ns[entity.get_absolute_url()])
         graph.add((this_person, namespaces['rdf']['type'], namespaces['foaf']['Person']))
         graph.add((this_person, namespaces['rdfs']['label'], Literal(str(entity))))
@@ -278,7 +267,7 @@ class StoryView(LinkedDataView):
             namespace = Namespace(schema.uri)
             graph.bind(schema.prefix, namespace)
             namespaces[schema.prefix] = namespace
-        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain))
+        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain,))
         this_entity = URIRef(host_ns[entity.get_absolute_url()])
         graph.add((this_entity, namespaces['rdf']['type'], namespaces['bibo']['Note']))
         graph.add((this_entity, namespaces['rdfs']['label'], Literal(str(entity))))
@@ -303,7 +292,7 @@ class StoryListView(LinkedDataListView):
             namespace = Namespace(schema.uri)
             graph.bind(schema.prefix, namespace)
             namespaces[schema.prefix] = namespace
-        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain))
+        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain,))
         for entity in entities:
             this_entity = URIRef(host_ns[entity.get_absolute_url()])
             graph.add((this_entity, namespaces['rdf']['type'], namespaces['bibo']['Note']))
@@ -324,7 +313,7 @@ class ImageView(LinkedDataView):
             namespace = Namespace(schema.uri)
             graph.bind(schema.prefix, namespace)
             namespaces[schema.prefix] = namespace
-        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain))
+        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain,))
         this_entity = URIRef(host_ns[entity.get_absolute_url()])
         graph.add((this_entity, namespaces['rdf']['type'], namespaces['foaf']['Image']))
         graph.add((this_entity, namespaces['rdfs']['label'], Literal(str(entity))))
@@ -347,7 +336,7 @@ class ImageListView(LinkedDataListView):
             namespace = Namespace(schema.uri)
             graph.bind(schema.prefix, namespace)
             namespaces[schema.prefix] = namespace
-        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain))
+        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain,))
         for entity in entities:
             this_entity = URIRef(host_ns[entity.get_absolute_url()])
             graph.add((this_entity, namespaces['rdf']['type'], namespaces['foaf']['Image']))
@@ -368,7 +357,7 @@ class OrganisationView(LinkedDataView):
             namespace = Namespace(schema.uri)
             graph.bind(schema.prefix, namespace)
             namespaces[schema.prefix] = namespace
-        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain))
+        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain,))
         this_person = URIRef(host_ns[entity.get_absolute_url()])
         graph.add((this_person, namespaces['rdf']['type'], namespaces['foaf']['Person']))
         graph.add((this_person, namespaces['rdfs']['label'], Literal(str(entity))))
@@ -390,7 +379,7 @@ class OrganisationListView(LinkedDataListView):
             namespace = Namespace(schema.uri)
             graph.bind(schema.prefix, namespace)
             namespaces[schema.prefix] = namespace
-        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain))
+        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain,))
         for entity in entities:
             this_person = URIRef(host_ns[entity.get_absolute_url()])
             graph.add((this_person, namespaces['rdf']['type'], namespaces['foaf']['Person']))
@@ -411,7 +400,7 @@ class RankView(LinkedDataView):
             namespace = Namespace(schema.uri)
             graph.bind(schema.prefix, namespace)
             namespaces[schema.prefix] = namespace
-        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain))
+        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain,))
         this_person = URIRef(host_ns[entity.get_absolute_url()])
         graph.add((this_person, namespaces['rdf']['type'], namespaces['foaf']['Person']))
         graph.add((this_person, namespaces['rdfs']['label'], Literal(str(entity))))
@@ -431,7 +420,7 @@ class PersonAddressView(LinkedDataView):
             namespace = Namespace(schema.uri)
             graph.bind(schema.prefix, namespace)
             namespaces[schema.prefix] = namespace
-        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain))
+        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain,))
         this_person = URIRef(host_ns[entity.get_absolute_url()])
         graph.add((this_person, namespaces['rdf']['type'], namespaces['foaf']['Person']))
         graph.add((this_person, namespaces['rdfs']['label'], Literal(str(entity))))
@@ -451,7 +440,7 @@ class ServiceNumberView(LinkedDataView):
             namespace = Namespace(schema.uri)
             graph.bind(schema.prefix, namespace)
             namespaces[schema.prefix] = namespace
-        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain))
+        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain,))
         this_person = URIRef(host_ns[entity.person.get_absolute_url()])
         graph.add((this_person, namespaces['rdf']['type'], namespaces['foaf']['Person']))
         graph.add((this_person, namespaces['dc']['identifier'], Literal(str(entity.service_number))))
@@ -471,7 +460,7 @@ class PersonRelationshipView(LinkedDataView):
             namespace = Namespace(schema.uri)
             graph.bind(schema.prefix, namespace)
             namespaces[schema.prefix] = namespace
-        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain))
+        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain,))
         this_person = URIRef(host_ns[entity.get_absolute_url()])
         graph.add((this_person, namespaces['rdf']['type'], namespaces['foaf']['Person']))
         graph.add((this_person, namespaces['rdfs']['label'], Literal(str(entity))))
@@ -491,7 +480,7 @@ class PersonMembershipView(LinkedDataView):
             namespace = Namespace(schema.uri)
             graph.bind(schema.prefix, namespace)
             namespaces[schema.prefix] = namespace
-        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain))
+        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain,))
         this_person = URIRef(host_ns[entity.get_absolute_url()])
         graph.add((this_person, namespaces['rdf']['type'], namespaces['foaf']['Person']))
         graph.add((this_person, namespaces['rdfs']['label'], Literal(str(entity))))
@@ -519,8 +508,8 @@ class SuggestPerson(CreateView):
         person.status = 'pending'
         person.save()
         self.object = person
-        assign('people.change_person', self.request.user, person)
-        assign('people.delete_person', self.request.user, person)
+        assign_perm('people.change_person', self.request.user, person)
+        assign_perm('people.delete_person', self.request.user, person)
         return HttpResponseRedirect(self.get_success_url())
 
     def get_context_data(self, **kwargs):
@@ -564,8 +553,8 @@ class AddPerson(CreateView):
         person.added_by = self.request.user
         person.status = 'non-service'
         person.save()
-        assign('people.change_person', self.request.user, person)
-        assign('people.delete_person', self.request.user, person)
+        assign_perm('people.change_person', self.request.user, person)
+        assign_perm('people.delete_person', self.request.user, person)
         related_person = form.cleaned_data.get('related_person', None)
         if related_person:
             related_person.associated_person = person
@@ -575,14 +564,14 @@ class AddPerson(CreateView):
         if source and creator_type:
             role = SourceRole.objects.get(label=creator_type)
             creator, created = SourcePerson.objects.get_or_create(
-                        person=person,
-                        source=source,
-                        role=role
-                    )
+                person=person,
+                source=source,
+                role=role
+            )
         return HttpResponseRedirect(self.get_success_url())
 
     def get_initial(self):
-        initial = {}
+        initial = super().get_initial()
         person_id = self.kwargs.get('person_id', None)
         if person_id:
             initial['related_person'] = person_id
@@ -624,15 +613,16 @@ class UpdatePerson(UpdateView):
                 month = 0
             if getattr(self.object, '{}_day_known'.format(name)) is False:
                 day = 0
-            #date = '{}-{}-{}'.format(year, month, day)
+            # date = '{}-{}-{}'.format(year, month, day)
         return date
 
     def get_initial(self):
-        initial = {}
-        initial['birth_earliest_date'] = self.prepare_date('birth_earliest_date')
-        initial['birth_latest_date'] = self.prepare_date('birth_latest_date')
-        initial['death_earliest_date'] = self.prepare_date('death_earliest_date')
-        initial['death_latest_date'] = self.prepare_date('death_latest_date')
+        initial = {
+            'birth_earliest_date': self.prepare_date('birth_earliest_date'),
+            'birth_latest_date': self.prepare_date('birth_latest_date'),
+            'death_earliest_date': self.prepare_date('death_earliest_date'),
+            'death_latest_date': self.prepare_date('death_latest_date')
+        }
         return initial
 
     def form_valid(self, form):
@@ -673,8 +663,8 @@ class AddAltName(CreateView):
         altname = form.save(commit=False)
         altname.added_by = self.request.user
         altname.save()
-        assign('people.change_alternativepersonname', self.request.user, altname)
-        assign('people.delete_alternativepersonname', self.request.user, altname)
+        assign_perm('people.change_alternativepersonname', self.request.user, altname)
+        assign_perm('people.delete_alternativepersonname', self.request.user, altname)
         return HttpResponseRedirect(reverse('altname-update', args=[altname.id]))
 
 
@@ -723,8 +713,8 @@ class AddLifeEvent(CreateView):
         event = form.save(commit=False)
         event.added_by = self.request.user
         event.save()
-        assign('people.change_lifeevent', self.request.user, event)
-        assign('people.delete_lifeevent', self.request.user, event)
+        assign_perm('people.change_lifeevent', self.request.user, event)
+        assign_perm('people.delete_lifeevent', self.request.user, event)
         return HttpResponseRedirect(reverse('lifeevent-update', args=[event.id]))
 
 
@@ -797,11 +787,11 @@ class AddEventLocation(CreateView):
         return initial
 
     def form_valid(self, form):
-        #location = form.save(commit=False)
-        #location.added_by = self.request.user
-        #location.save()
-        #assign('people.change_eventlocation', self.request.user, location)
-        #assign('people.delete_eventlocation', self.request.user, location)
+        # location = form.save(commit=False)
+        # location.added_by = self.request.user
+        # location.save()
+        # assign_perm('people.change_eventlocation', self.request.user, location)
+        # assign_perm('people.delete_eventlocation', self.request.user, location)
         return HttpResponseRedirect(self.get_success_url())
 
     def get_success_url(self):
@@ -853,8 +843,8 @@ class AddBirth(CreateView):
         birth = form.save(commit=False)
         birth.added_by = self.request.user
         birth.save()
-        assign('people.change_birth', self.request.user, birth)
-        assign('people.delete_birth', self.request.user, birth)
+        assign_perm('people.change_birth', self.request.user, birth)
+        assign_perm('people.delete_birth', self.request.user, birth)
         return HttpResponseRedirect(reverse('birth-update', args=[birth.id]))
 
 
@@ -923,8 +913,8 @@ class AddDeath(CreateView):
         death = form.save(commit=False)
         death.added_by = self.request.user
         death.save()
-        assign('people.change_death', self.request.user, death)
-        assign('people.delete_death', self.request.user, death)
+        assign_perm('people.change_death', self.request.user, death)
+        assign_perm('people.delete_death', self.request.user, death)
         return HttpResponseRedirect(reverse('death-update', args=[death.id]))
 
 
@@ -990,16 +980,16 @@ class AddOrganisation(CreateView):
         org.added_by = self.request.user
         org.save()
         self.object = org
-        assign('people.change_organisation', self.request.user, org)
-        assign('people.delete_organisation', self.request.user, org)
+        assign_perm('people.change_organisation', self.request.user, org)
+        assign_perm('people.delete_organisation', self.request.user, org)
         person = form.cleaned_data.get('person', None)
         person_organisation = form.cleaned_data.get('person_organisation', None)
         if person:
             person_org = PersonAssociatedOrganisation.objects.create(
-                    person=person,
-                    organisation=org,
-                    added_by=self.request.user
-                )
+                person=person,
+                organisation=org,
+                added_by=self.request.user
+            )
             self.entity = person_org
         elif person_organisation:
             person_organisation.organisation = org
@@ -1092,8 +1082,8 @@ class AddPersonAssociatedPerson(CreateView):
         assoc = form.save(commit=False)
         assoc.added_by = self.request.user
         assoc.save()
-        assign('people.change_personassociatedperson', self.request.user, assoc)
-        assign('people.delete_personassociatedperson', self.request.user, assoc)
+        assign_perm('people.change_personassociatedperson', self.request.user, assoc)
+        assign_perm('people.delete_personassociatedperson', self.request.user, assoc)
         return HttpResponseRedirect(reverse('persontoperson-update', args=[assoc.id]))
 
 
@@ -1117,9 +1107,10 @@ class UpdatePersonAssociatedPerson(PermissionRequiredMixin, UpdateView):
         return date
 
     def get_initial(self):
-        initial = {}
-        initial['start_earliest_date'] = self.prepare_date('start_earliest_date')
-        initial['end_earliest_date'] = self.prepare_date('end_earliest_date')
+        initial = {
+            'start_earliest_date': self.prepare_date('start_earliest_date'),
+            'end_earliest_date': self.prepare_date('end_earliest_date')
+        }
         return initial
 
     def get_success_url(self):
@@ -1162,8 +1153,8 @@ class AddPersonAssociatedOrganisation(CreateView):
         assoc = form.save(commit=False)
         assoc.added_by = self.request.user
         assoc.save()
-        assign('people.change_personassociatedorganisation', self.request.user, assoc)
-        assign('people.delete_personassociatedorganisation', self.request.user, assoc)
+        assign_perm('people.change_personassociatedorganisation', self.request.user, assoc)
+        assign_perm('people.delete_personassociatedorganisation', self.request.user, assoc)
         return HttpResponseRedirect(reverse('personorganisation-update', args=[assoc.id]))
 
 
@@ -1232,8 +1223,8 @@ class AddPersonAddress(CreateView):
         address = form.save(commit=False)
         address.added_by = self.request.user
         address.save()
-        assign('people.change_personaddress', self.request.user, address)
-        assign('people.delete_personaddress', self.request.user, address)
+        assign_perm('people.change_personaddress', self.request.user, address)
+        assign_perm('people.delete_personaddress', self.request.user, address)
         return HttpResponseRedirect(reverse('personaddress-update', args=[address.id]))
 
 
@@ -1302,8 +1293,8 @@ class AddRank(CreateView):
         rank = form.save(commit=False)
         rank.added_by = self.request.user
         rank.save()
-        assign('people.change_rank', self.request.user, rank)
-        assign('people.delete_rank', self.request.user, rank)
+        assign_perm('people.change_rank', self.request.user, rank)
+        assign_perm('people.delete_rank', self.request.user, rank)
         return HttpResponseRedirect(reverse('person-update', args=[rank.person.id]))
 
 
@@ -1372,8 +1363,8 @@ class AddServiceNumber(CreateView):
         obj = form.save(commit=False)
         obj.added_by = self.request.user
         obj.save()
-        assign('people.change_servicenumber', self.request.user, obj)
-        assign('people.delete_servicenumber', self.request.user, obj)
+        assign_perm('people.change_servicenumber', self.request.user, obj)
+        assign_perm('people.delete_servicenumber', self.request.user, obj)
         return HttpResponseRedirect(reverse('servicenumber-update', args=[obj.id]))
 
 

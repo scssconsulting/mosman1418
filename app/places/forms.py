@@ -27,7 +27,7 @@ class EventChoice(ModelSelect2Widget):
 
 
 class PlaceChoice(ModelSelect2Widget):
-    queryset = Place.objects
+    queryset = Place.objects.all()
     search_fields = ['display_name__istartswith', 'place_name__istartswith']
 
 

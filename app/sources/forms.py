@@ -1,35 +1,31 @@
-# -*- coding: utf-8 -*-
-
-import re
-import datetime
-from urllib.request import urlopen, URLError, HTTPError
 import json
-from bs4 import BeautifulSoup
+import datetime
+
+from urllib.request import urlopen
 
 from django import forms
 from django.forms import ModelForm
+from django.forms.widgets import SelectDateWidget
 from django.forms.models import inlineformset_factory
-from django_select2.forms import (
-    ModelSelect2Widget, Select2Widget, ModelSelect2MultipleWidget)
-from ckeditor.widgets import CKEditorWidget 
+from django_select2.forms import (ModelSelect2Widget, ModelSelect2MultipleWidget)
+
+from ckeditor.widgets import CKEditorWidget
 
 from app.sources.models import *
 from app.people.models import *
 from app.generic.forms import DateSelectMixin, ShortDateForm
 
-from django.forms.widgets import SelectDateWidget
-from calendar import monthrange
-
-from rstools.client import RSItemClient, RSSeriesClient
-from moatools.client import MOAClient
-from awmtools.client import RollClient, EmbarkationClient, RedCrossClient, HonoursClient, CollectionClient
 from cwgctools.client import CWGCClient
+from rstools.client import RSItemClient, RSSeriesClient
+from awmtools.client import RollClient, EmbarkationClient, RedCrossClient, HonoursClient
 
 TROVE_API_KEY = 'ierj9cpsh7f5u7kg'
+
 
 def get_range_upper_year():
     now = datetime.datetime.now().year
     return now + 1
+
 
 YEARS = [year for year in range(1850, get_range_upper_year())]
 
@@ -59,7 +55,7 @@ class RepositoryChoice(ModelSelect2Widget):
 
 class AuthorMultiChoices(ModelSelect2MultipleWidget):
     queryset = Person.objects
-    search_fields = ['family_name__istartswith' ]
+    search_fields = ['family_name__istartswith']
 
 
 class SourcesMultiChoice(ModelSelect2MultipleWidget):
@@ -187,14 +183,18 @@ class AddSourceForm(ModelForm, DateSelectMixin):
                 if 'url' not in cleaned_data:
                     self._errors['url'] = self.error_class(['A url is required'])
                 else:
-                    if category == 'trove':
-                        cleaned_data = self.get_trove_newspaper(cleaned_data)
-                    elif category == 'naa':
-                        cleaned_data = self.get_naa_record(cleaned_data)
-                    elif category == 'awm':
-                        cleaned_data = self.get_awm_record(cleaned_data)
-                    elif category == 'cwgc':
-                        cleaned_data = self.get_cwgc_record(cleaned_data)
+                    category_map = {
+                        'trove': self.get_trove_newspaper,
+                        'naa': self.get_naa_record,
+                        'awm': self.get_awm_record,
+                        'cwgc': self.get_cwgc_record,
+                    }
+                    if category in category_map:
+                        if cleaned_data['url'] is None:
+                            self._errors['url'] = self.error_class(['A url is required'])
+                        else:
+                            cleaned_data = category_map[category](cleaned_data)
+
         return cleaned_data
 
     def get_trove_newspaper(self, cleaned_data):
@@ -203,24 +203,23 @@ class AddSourceForm(ModelForm, DateSelectMixin):
             re.compile(r'http://nla.gov.au/nla.news-article(\d+)')
         ]
         url = cleaned_data['url']
-        print (url)
-        id = None
+        gid = None
         for pattern in patterns:
             try:
-                id = pattern.search(url).group(1)
+                gid = pattern.search(url).group(1)
                 break
             except AttributeError:
                 continue
-        if not id:
+        if not gid:
             self._errors['url'] = self.error_class(['Not a valid Trove url'])
             return cleaned_data
-        trove_url = 'http://api.trove.nla.gov.au/newspaper/%s?key=%s&encoding=json' % (id, TROVE_API_KEY)
+        trove_url = 'http://api.trove.nla.gov.au/newspaper/%s?key=%s&encoding=json' % (gid, TROVE_API_KEY)
         response = urlopen(trove_url)
         data = json.load(response)
         source_type = SourceType.objects.get(label='newspaper article')
         cleaned_data['title'] = data['article']['heading']
         cleaned_data['collection_title'] = data['article']['title']['value']
-        date = datetime.datetime(*map(int, re.split('[^\d]', data['article']['date'])))
+        date = datetime.datetime(*map(int, re.split(r'[^\d]', data['article']['date'])))
         cleaned_data['publication_date'] = date
         cleaned_data['publication_date_month_known'] = True
         cleaned_data['publication_date_day_known'] = True
@@ -234,12 +233,11 @@ class AddSourceForm(ModelForm, DateSelectMixin):
         return cleaned_data
 
     def get_naa_record(self, cleaned_data):
-        current_user = self.user
         system_user = User.objects.get(username='system')
         url = cleaned_data['url']
         try:
             if 'dhistory' in url:
-                barcode = re.search(r'naa\/items\/(\d+)', url).group(1)
+                barcode = re.search(r'naa/items/(\d+)', url).group(1)
             else:
                 barcode = re.search(r'Barcode=(\d+)', url).group(1)
         except AttributeError:
@@ -248,7 +246,6 @@ class AddSourceForm(ModelForm, DateSelectMixin):
         rs = RSItemClient()
         rsseries = RSSeriesClient()
         item_details = rs.get_summary(barcode)
-        print (item_details)
         dates = item_details['contents_dates']
         citation = '{}, {}'.format(
             item_details['series'],
@@ -360,7 +357,6 @@ class AddSourceForm(ModelForm, DateSelectMixin):
         website_type = SourceType.objects.get(label='website')
         webpage_type = SourceType.objects.get(label='webpage')
         cwgc = CWGCClient()
-        url = cleaned_data['url']
         details = cwgc.get_details(url)
         collection, created = Source.objects.get_or_create(
             title='Find War Dead',
@@ -397,12 +393,13 @@ class UpdateSourceForm(ModelForm, DateSelectMixin):
     publication_date_end = forms.CharField(widget=NewSelectDateWidget(
         attrs={'class': 'input-small'},
         years=YEARS), required=False)
-    #main_people = PeopleMultiChoices(required=False)
-    #other_people = PeopleMultiChoices(required=False)
+    # main_people = PeopleMultiChoices(required=False)
+    # other_people = PeopleMultiChoices(required=False)
     collection = CollectionChoice(required=False)
     repository = RepositoryChoice(required=False)
-    #authors = AuthorMultiChoices(required=False)
-    #editors = AuthorMultiChoices(required=False)
+
+    # authors = AuthorMultiChoices(required=False)
+    # editors = AuthorMultiChoices(required=False)
 
     def clean(self):
         cleaned_data = super(UpdateSourceForm, self).clean()

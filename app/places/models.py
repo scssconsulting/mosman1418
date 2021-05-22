@@ -3,8 +3,6 @@ from django.urls import reverse
 
 from app.generic.models import Place as GenericPlace, StandardMetadata
 
-# Create your models here.
-
 
 class Place(GenericPlace):
     place_name = models.CharField(max_length=100, blank=True)
@@ -16,7 +14,10 @@ class Place(GenericPlace):
 
     def __str__(self):
         if not self.place_name:
-            summary = self.display_name
+            summary = self.display_name if self.display_name else '{}{}'.format(
+                ', {}'.format(self.state) if self.state else '',
+                ', {}'.format(self.country) if self.country else ''
+            )
         else:
             summary = '{}{}{}'.format(
                 self.place_name,

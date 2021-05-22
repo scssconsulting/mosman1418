@@ -1,32 +1,29 @@
-# -*- coding: utf-8 -*-
+import re
 
-from django.shortcuts import render_to_response, render
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from urllib.error import URLError, HTTPError
+
+from django.shortcuts import render
+from django.urls import reverse_lazy
 from django.contrib.sites.models import Site
-from django.views.generic.edit import CreateView, UpdateView, DeleteView
-from django.http import HttpResponse, HttpResponseRedirect
-from django.urls import reverse
-from django.contrib.auth.models import User
-from guardian.decorators import permission_required
-from guardian.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.http import HttpResponseRedirect
 from django.utils.decorators import method_decorator
-from django.urls import reverse, reverse_lazy
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.views.generic.edit import CreateView, UpdateView, DeleteView
 
-from guardian.shortcuts import assign
+from guardian.shortcuts import assign_perm
+from guardian.decorators import permission_required
+from guardian.mixins import PermissionRequiredMixin
 
 from rdflib import Graph
-from rdflib import Namespace, BNode, Literal, RDF, URIRef
+from rdflib import Namespace, Literal, URIRef
 
-from app.linkeddata.views import LinkedDataView, LinkedDataListView, RDFSchema
-from app.linkeddata.models import RDFSchema
-from app.people.models import *
-from app.sources.models import *
 from app.places.models import *
 from app.sources.forms import *
+from app.linkeddata.models import RDFSchema
+from app.linkeddata.views import LinkedDataView, LinkedDataListView
 
 from moatools.client import MOAClient
-from rstools.utilities import parse_date, convert_date_to_iso
-from awmtools.client import RollClient, EmbarkationClient, RedCrossClient, HonoursClient
+from rstools.utilities import parse_date
 
 
 class SourceView(LinkedDataView):
@@ -42,7 +39,7 @@ class SourceView(LinkedDataView):
             namespace = Namespace(schema.uri)
             graph.bind(schema.prefix, namespace)
             namespaces[schema.prefix] = namespace
-        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain))
+        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain,))
         this_entity = URIRef(host_ns[entity.get_absolute_url()])
         graph.add((this_entity, namespaces['rdfs']['label'], Literal(str(entity))))
         graph.add((this_entity, namespaces['dc']['title'], Literal(str(entity))))
@@ -69,7 +66,7 @@ class SourceListView(LinkedDataListView):
             namespace = Namespace(schema.uri)
             graph.bind(schema.prefix, namespace)
             namespaces[schema.prefix] = namespace
-        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain))
+        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain,))
         for entity in entities:
             this_entity = URIRef(host_ns[entity.get_absolute_url()])
             graph.add((this_entity, namespaces['rdf']['type'], namespaces['bibo']['Note']))
@@ -91,7 +88,7 @@ class ImageListView(LinkedDataListView):
             namespace = Namespace(schema.uri)
             graph.bind(schema.prefix, namespace)
             namespaces[schema.prefix] = namespace
-        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain))
+        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain,))
         for entity in entities:
             this_entity = URIRef(host_ns[entity.get_absolute_url()])
             graph.add((this_entity, namespaces['rdf']['type'], namespaces['bibo']['Note']))
@@ -125,7 +122,7 @@ class StoryView(LinkedDataView):
             namespace = Namespace(schema.uri)
             graph.bind(schema.prefix, namespace)
             namespaces[schema.prefix] = namespace
-        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain))
+        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain,))
         this_entity = URIRef(host_ns[entity.get_absolute_url()])
         graph.add((this_entity, namespaces['rdf']['type'], namespaces['bibo']['Note']))
         graph.add((this_entity, namespaces['rdfs']['label'], Literal(str(entity))))
@@ -151,7 +148,7 @@ class StoryListView(LinkedDataListView):
             namespace = Namespace(schema.uri)
             graph.bind(schema.prefix, namespace)
             namespaces[schema.prefix] = namespace
-        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain))
+        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain,))
         for entity in entities:
             this_entity = URIRef(host_ns[entity.get_absolute_url()])
             graph.add((this_entity, namespaces['rdf']['type'], namespaces['bibo']['Note']))
@@ -288,12 +285,12 @@ class AddSourceView(CreateView):
         source.save()
         self.object = source
         # creators
-        #author_role = SourceRole.objects.get(label='author')
-        #editor_role = SourceRole.objects.get(label='editor')
-        #authors = form.cleaned_data['authors']
-        #editors = form.cleaned_data['editors']
-        #self.associate_creators(authors, author_role)
-        #self.associate_creators(editors, editor_role)
+        # author_role = SourceRole.objects.get(label='author')
+        # editor_role = SourceRole.objects.get(label='editor')
+        # authors = form.cleaned_data['authors']
+        # editors = form.cleaned_data['editors']
+        # self.associate_creators(authors, author_role)
+        # self.associate_creators(editors, editor_role)
         # Subjects
         mainperson = form.cleaned_data['mainperson']
         person = form.cleaned_data['person']
@@ -320,10 +317,10 @@ class AddSourceView(CreateView):
             person_address.save()
         '''
         # Permissions
-        assign('sources.change_source', self.request.user, source)
-        assign('sources.delete_source', self.request.user, source)
+        assign_perm('sources.change_source', self.request.user, source)
+        assign_perm('sources.delete_source', self.request.user, source)
         # Extra processing
-        
+
         return HttpResponseRedirect(self.get_success_url())
 
     def get_success_url(self):
@@ -389,8 +386,8 @@ class AddSourceView(CreateView):
 
         )
         if created:
-            assign('sources.change_source', current_user, item)
-            assign('sources.delete_source', current_user, item)
+            assign_perm('sources.change_source', current_user, item)
+            assign_perm('sources.delete_source', current_user, item)
         return item
 
     def get_moa_page(self, form):
@@ -410,7 +407,7 @@ class AddSourceView(CreateView):
             # Should perhaps log this in some way so it can be followed up.
             pass
         else:
-            print (details)
+            print(details)
             website_type = SourceType.objects.get(label='website')
             webpage_type = SourceType.objects.get(label='webpage')
             moa_site, created = Source.objects.get_or_create(
@@ -431,8 +428,8 @@ class AddSourceView(CreateView):
                 defaults={'added_by': current_user}
             )
             if created:
-                assign('sources.change_source', current_user, moa_page)
-                assign('sources.delete_source', current_user, moa_page)
+                assign_perm('sources.change_source', current_user, moa_page)
+                assign_perm('sources.delete_source', current_user, moa_page)
             primary_topic = SourceAssociation.objects.get(label='primary topic of')
             person_source, created = PersonAssociatedSource.objects.get_or_create(
                 person=person,
@@ -440,8 +437,8 @@ class AddSourceView(CreateView):
                 association=primary_topic,
                 defaults={'added_by': current_user})
             if created:
-                assign('people.change_personassociatedsource', current_user, person_source)
-                assign('people.delete_personassociatedsource', current_user, person_source)
+                assign_perm('people.change_personassociatedsource', current_user, person_source)
+                assign_perm('people.delete_personassociatedsource', current_user, person_source)
             try:
                 person_name, created = AlternativePersonName.objects.get_or_create(
                     person=person,
@@ -452,8 +449,8 @@ class AddSourceView(CreateView):
                         'added_by': current_user}
                 )
                 if created:
-                    assign('people.change_alternativepersonname', current_user, person_name)
-                    assign('people.delete_alternativepersonname', current_user, person_name)
+                    assign_perm('people.change_alternativepersonname', current_user, person_name)
+                    assign_perm('people.delete_alternativepersonname', current_user, person_name)
             except AlternativePersonName.MultipleObjectsReturned:
                 alt_name = AlternativePersonName.objects.filter(person=person, display_name=details['name'])[0]
             person_name.sources.add(self.object)
@@ -466,8 +463,8 @@ class AddSourceView(CreateView):
                 }
             )
             if created:
-                assign('places.change_place', current_user, birth_place)
-                assign('places.delete_place', current_user, birth_place)
+                assign_perm('places.change_place', current_user, birth_place)
+                assign_perm('places.delete_place', current_user, birth_place)
             else:
                 if birth_place.merged_into:
                     birth_place = Place.objects.get(id=birth_place.merged_into.id)
@@ -477,8 +474,8 @@ class AddSourceView(CreateView):
                 location=birth_place,
                 added_by=current_user
             )
-            assign('people.change_birth', current_user, birth)
-            assign('people.delete_birth', current_user, birth)
+            assign_perm('people.change_birth', current_user, birth)
+            assign_perm('people.delete_birth', current_user, birth)
             birth.sources.add(self.object)
             birth.save()
             enlistment_type = LifeEventType.objects.get(label='enlistment')
@@ -490,8 +487,8 @@ class AddSourceView(CreateView):
                 }
             )
             if created:
-                assign('places.change_place', current_user, enlistment_place)
-                assign('places.delete_place', current_user, enlistment_place)
+                assign_perm('places.change_place', current_user, enlistment_place)
+                assign_perm('places.delete_place', current_user, enlistment_place)
             else:
                 if enlistment_place.merged_into:
                     enlistment_place = Place.objects.get(id=enlistment_place.merged_into.id)
@@ -501,8 +498,8 @@ class AddSourceView(CreateView):
                 person=person,
                 added_by=current_user
             )
-            assign('people.change_lifeevent', current_user, enlistment)
-            assign('people.delete_lifeevent', current_user, enlistment)
+            assign_perm('people.change_lifeevent', current_user, enlistment)
+            assign_perm('people.delete_lifeevent', current_user, enlistment)
             enlistment.sources.add(self.object)
             enlistment.save()
             location_association = EventLocationAssociation.objects.get(label='happened in')
@@ -513,8 +510,8 @@ class AddSourceView(CreateView):
                 defaults={'added_by': current_user}
             )
             if created:
-                assign('people.change_eventlocation', current_user, event_location)
-                assign('people.delete_eventlocation', current_user, event_location)
+                assign_perm('people.change_eventlocation', current_user, event_location)
+                assign_perm('people.delete_eventlocation', current_user, event_location)
             if details['ww2_file']['barcode']:
                 item = self.get_naa_record(details['ww2_file']['barcode'])
                 person_source, created = PersonAssociatedSource.objects.get_or_create(
@@ -523,8 +520,8 @@ class AddSourceView(CreateView):
                     association=primary_topic,
                     defaults={'added_by': current_user})
                 if created:
-                    assign('people.change_personassociatedsource', current_user, person_source)
-                    assign('people.delete_personassociatedsource', current_user, person_source)
+                    assign_perm('people.change_personassociatedsource', current_user, person_source)
+                    assign_perm('people.delete_personassociatedsource', current_user, person_source)
             if details['see_also']['barcode']:
                 item = self.get_naa_record(details['see_also']['barcode'])
                 person_source, created = PersonAssociatedSource.objects.get_or_create(
@@ -533,8 +530,8 @@ class AddSourceView(CreateView):
                     association=primary_topic,
                     defaults={'added_by': current_user})
                 if created:
-                    assign('people.change_personassociatedsource', current_user, person_source)
-                    assign('people.delete_personassociatedsource', current_user, person_source)
+                    assign_perm('people.change_personassociatedsource', current_user, person_source)
+                    assign_perm('people.delete_personassociatedsource', current_user, person_source)
             if details['also_known_as']:
                 alt_name, created = AlternativePersonName.objects.get_or_create(
                     person=person,
@@ -542,8 +539,8 @@ class AddSourceView(CreateView):
                     defaults={'added_by': current_user}
                 )
                 if created:
-                    assign('people.change_alternativepersonname', current_user, alt_name)
-                    assign('people.delete_alternativepersonname', current_user, alt_name)
+                    assign_perm('people.change_alternativepersonname', current_user, alt_name)
+                    assign_perm('people.delete_alternativepersonname', current_user, alt_name)
                 alt_name.sources.add(self.object)
             if details['next_of_kin']:
                 try:
@@ -556,8 +553,8 @@ class AddSourceView(CreateView):
                         status='non-service',
                         added_by=current_user
                     )
-                    assign('people.change_person', current_user, related_person)
-                    assign('people.delete_person', current_user, related_person)
+                    assign_perm('people.change_person', current_user, related_person)
+                    assign_perm('people.delete_person', current_user, related_person)
                     relation_type, created = PersonAssociation.objects.get_or_create(
                         label=relation
                     )
@@ -569,8 +566,8 @@ class AddSourceView(CreateView):
                     )
                     related_person.sources.add(self.object)
                     related_person.save()
-                    assign('people.change_personassociatedperson', current_user, related_person)
-                    assign('people.delete_personassociatedperson', current_user, related_person)
+                    assign_perm('people.change_personassociatedperson', current_user, related_person)
+                    assign_perm('people.delete_personassociatedperson', current_user, related_person)
             return True
 
     def process_roll_of_honour(self):
@@ -586,8 +583,8 @@ class AddSourceView(CreateView):
                 defaults={'added_by': current_user}
             )
             if created:
-                assign('people.change_alternativepersonname', current_user, alt_name)
-                assign('people.delete_alternativepersonname', current_user, alt_name)
+                assign_perm('people.change_alternativepersonname', current_user, alt_name)
+                assign_perm('people.delete_alternativepersonname', current_user, alt_name)
         except AlternativePersonName.MultipleObjectsReturned:
             alt_name = AlternativePersonName.objects.filter(person=person, display_name=details['name'])[0]
         alt_name.sources.add(self.object)
@@ -600,8 +597,8 @@ class AddSourceView(CreateView):
                     defaults={'added_by': current_user}
                 )
                 if created:
-                    assign('people.change_alternativepersonname', current_user, alt_name)
-                    assign('people.delete_alternativepersonname', current_user, alt_name)
+                    assign_perm('people.change_alternativepersonname', current_user, alt_name)
+                    assign_perm('people.delete_alternativepersonname', current_user, alt_name)
                 alt_name.sources.add(self.object)
                 alt_name.save()
         # DEATH
@@ -614,8 +611,8 @@ class AddSourceView(CreateView):
             }
         )
         if created:
-            assign('places.change_place', current_user, death_location)
-            assign('places.delete_place', current_user, death_location)
+            assign_perm('places.change_place', current_user, death_location)
+            assign_perm('places.delete_place', current_user, death_location)
         else:
             if death_location.merged_into:
                 death_location = Place.objects.get(id=death_location.merged_into.id)
@@ -627,8 +624,8 @@ class AddSourceView(CreateView):
             }
         )
         if created:
-            assign('places.change_place', current_user, burial_location)
-            assign('places.delete_place', current_user, burial_location)
+            assign_perm('places.change_place', current_user, burial_location)
+            assign_perm('places.delete_place', current_user, burial_location)
         else:
             if burial_location.merged_into:
                 burial_location = Place.objects.get(id=burial_location.merged_into.id)
@@ -643,8 +640,8 @@ class AddSourceView(CreateView):
             added_by=current_user
         )
         death.sources.add(source)
-        assign('people.change_death', current_user, death)
-        assign('people.delete_death', current_user, death)
+        assign_perm('people.change_death', current_user, death)
+        assign_perm('people.delete_death', current_user, death)
         # DETAILS
         rank, created = Rank.objects.get_or_create(
             person=person,
@@ -653,8 +650,8 @@ class AddSourceView(CreateView):
         )
         rank.sources.add(source)
         if created:
-            assign('people.change_rank', current_user, rank)
-            assign('people.delete_rank', current_user, rank)
+            assign_perm('people.change_rank', current_user, rank)
+            assign_perm('people.delete_rank', current_user, rank)
         service_number, created = ServiceNumber.objects.get_or_create(
             person=person,
             service_number=details['service_number'],
@@ -662,8 +659,8 @@ class AddSourceView(CreateView):
         )
         service_number.sources.add(source)
         if created:
-            assign('people.change_servicenumber', current_user, service_number)
-            assign('people.delete_servicenumber', current_user, service_number)
+            assign_perm('people.change_servicenumber', current_user, service_number)
+            assign_perm('people.delete_servicenumber', current_user, service_number)
         unit = '{}, {}'.format(details['unit'], details['service'])
         org, created = Organisation.objects.get_or_create(
             display_name=unit,
@@ -673,8 +670,8 @@ class AddSourceView(CreateView):
             }
         )
         if created:
-            assign('people.change_organisation', current_user, org)
-            assign('people.delete_organisation', current_user, org)
+            assign_perm('people.change_organisation', current_user, org)
+            assign_perm('people.delete_organisation', current_user, org)
         else:
             if org.merged_into:
                 org = Organisation.objects.get(id=org.merged_into.id)
@@ -685,8 +682,8 @@ class AddSourceView(CreateView):
             association=org_association,
             added_by=current_user
         )
-        assign('people.change_personassociatedorganisation', current_user, person_org)
-        assign('people.delete_personassociatedorganisation', current_user, person_org)
+        assign_perm('people.change_personassociatedorganisation', current_user, person_org)
+        assign_perm('people.delete_personassociatedorganisation', current_user, person_org)
         person_org.sources.add(source)
         return True
 
@@ -704,8 +701,8 @@ class AddSourceView(CreateView):
                 defaults={'added_by': current_user}
             )
             if created:
-                assign('people.change_alternativepersonname', current_user, alt_name)
-                assign('people.delete_alternativepersonname', current_user, alt_name)
+                assign_perm('people.change_alternativepersonname', current_user, alt_name)
+                assign_perm('people.delete_alternativepersonname', current_user, alt_name)
         except AlternativePersonName.MultipleObjectsReturned:
             alt_name = AlternativePersonName.objects.filter(person=person, display_name=details['name'])[0]
         alt_name.sources.add(self.object)
@@ -719,8 +716,8 @@ class AddSourceView(CreateView):
         rank.sources.add(source)
         rank.save()
         if created:
-            assign('people.change_rank', current_user, rank)
-            assign('people.delete_rank', current_user, rank)
+            assign_perm('people.change_rank', current_user, rank)
+            assign_perm('people.delete_rank', current_user, rank)
         service_number, created = ServiceNumber.objects.get_or_create(
             person=person,
             service_number=details['service_number'],
@@ -729,8 +726,8 @@ class AddSourceView(CreateView):
         service_number.sources.add(source)
         service_number.save()
         if created:
-            assign('people.change_servicenumber', current_user, service_number)
-            assign('people.delete_servicenumber', current_user, service_number)
+            assign_perm('people.change_servicenumber', current_user, service_number)
+            assign_perm('people.delete_servicenumber', current_user, service_number)
         embarkation_type = LifeEventType.objects.get(label='embarkation')
         embarkation_place, created = Place.objects.get_or_create(
             display_name=details['place_of_embarkation'],
@@ -740,8 +737,8 @@ class AddSourceView(CreateView):
             }
         )
         if created:
-            assign('places.change_place', current_user, embarkation_place)
-            assign('places.delete_place', current_user, embarkation_place)
+            assign_perm('places.change_place', current_user, embarkation_place)
+            assign_perm('places.delete_place', current_user, embarkation_place)
         else:
             if embarkation_place.merged_into:
                 embarkation_place = Place.objects.get(id=embarkation_place.merged_into.id)
@@ -760,8 +757,8 @@ class AddSourceView(CreateView):
         )
         embarkation.sources.add(source)
         embarkation.save()
-        assign('people.change_lifeevent', current_user, embarkation)
-        assign('people.delete_lifeevent', current_user, embarkation)
+        assign_perm('people.change_lifeevent', current_user, embarkation)
+        assign_perm('people.delete_lifeevent', current_user, embarkation)
         location_association = EventLocationAssociation.objects.get(label='departed from')
         event_location = EventLocation.objects.create(
             lifeevent=embarkation,
@@ -769,8 +766,8 @@ class AddSourceView(CreateView):
             association=location_association,
             added_by=current_user
         )
-        assign('people.change_eventlocation', current_user, event_location)
-        assign('people.delete_eventlocation', current_user, event_location)
+        assign_perm('people.change_eventlocation', current_user, event_location)
+        assign_perm('people.delete_eventlocation', current_user, event_location)
         return True
 
     def process_red_cross(self):
@@ -787,8 +784,8 @@ class AddSourceView(CreateView):
                 defaults={'added_by': current_user}
             )
             if created:
-                assign('people.change_alternativepersonname', current_user, alt_name)
-                assign('people.delete_alternativepersonname', current_user, alt_name)
+                assign_perm('people.change_alternativepersonname', current_user, alt_name)
+                assign_perm('people.delete_alternativepersonname', current_user, alt_name)
         except AlternativePersonName.MultipleObjectsReturned:
             alt_name = AlternativePersonName.objects.filter(person=person, display_name=details['name'])[0]
         alt_name.sources.add(self.object)
@@ -802,8 +799,8 @@ class AddSourceView(CreateView):
         rank.sources.add(source)
         rank.save()
         if created:
-            assign('people.change_rank', current_user, rank)
-            assign('people.delete_rank', current_user, rank)
+            assign_perm('people.change_rank', current_user, rank)
+            assign_perm('people.delete_rank', current_user, rank)
         service_number, created = ServiceNumber.objects.get_or_create(
             person=person,
             service_number=details['service_number'],
@@ -812,8 +809,8 @@ class AddSourceView(CreateView):
         service_number.sources.add(source)
         service_number.save()
         if created:
-            assign('people.change_servicenumber', current_user, service_number)
-            assign('people.delete_servicenumber', current_user, service_number)
+            assign_perm('people.change_servicenumber', current_user, service_number)
+            assign_perm('people.delete_servicenumber', current_user, service_number)
         return True
 
     def process_honours(self):
@@ -830,8 +827,8 @@ class AddSourceView(CreateView):
                 defaults={'added_by': current_user}
             )
             if created:
-                assign('people.change_alternativepersonname', current_user, alt_name)
-                assign('people.delete_alternativepersonname', current_user, alt_name)
+                assign_perm('people.change_alternativepersonname', current_user, alt_name)
+                assign_perm('people.delete_alternativepersonname', current_user, alt_name)
         except AlternativePersonName.MultipleObjectsReturned:
             alt_name = AlternativePersonName.objects.filter(person=person, display_name=details['name'])[0]
         alt_name.sources.add(self.object)
@@ -845,8 +842,8 @@ class AddSourceView(CreateView):
         rank.sources.add(source)
         rank.save()
         if created:
-            assign('people.change_rank', current_user, rank)
-            assign('people.delete_rank', current_user, rank)
+            assign_perm('people.change_rank', current_user, rank)
+            assign_perm('people.delete_rank', current_user, rank)
         service_number, created = ServiceNumber.objects.get_or_create(
             person=person,
             service_number=details['service_number'],
@@ -855,8 +852,8 @@ class AddSourceView(CreateView):
         service_number.sources.add(source)
         service_number.save()
         if created:
-            assign('people.change_servicenumber', current_user, service_number)
-            assign('people.delete_servicenumber', current_user, service_number)
+            assign_perm('people.change_servicenumber', current_user, service_number)
+            assign_perm('people.delete_servicenumber', current_user, service_number)
         unit = '{}, {}'.format(details['unit'], details['service'])
         org, created = Organisation.objects.get_or_create(
             display_name=unit,
@@ -866,8 +863,8 @@ class AddSourceView(CreateView):
             }
         )
         if created:
-            assign('people.change_organisation', current_user, org)
-            assign('people.delete_organisation', current_user, org)
+            assign_perm('people.change_organisation', current_user, org)
+            assign_perm('people.delete_organisation', current_user, org)
         else:
             if org.merged_into:
                 org = Organisation.objects.get(id=org.merged_into.id)
@@ -878,8 +875,8 @@ class AddSourceView(CreateView):
             association=org_association,
             added_by=current_user
         )
-        assign('people.change_personassociatedorganisation', current_user, person_org)
-        assign('people.delete_personassociatedorganisation', current_user, person_org)
+        assign_perm('people.change_personassociatedorganisation', current_user, person_org)
+        assign_perm('people.delete_personassociatedorganisation', current_user, person_org)
         person_org.sources.add(source)
         if details['date_of_recommendation']:
             date = parse_date(details['date_of_recommendation'])
@@ -908,8 +905,8 @@ class AddSourceView(CreateView):
             awarded.start_earliest_day = date['day']
         awarded.sources.add(source)
         awarded.save()
-        assign('people.change_lifeevent', current_user, awarded)
-        assign('people.delete_lifeevent', current_user, awarded)
+        assign_perm('people.change_lifeevent', current_user, awarded)
+        assign_perm('people.delete_lifeevent', current_user, awarded)
         return True
 
     def process_cwgc(self):
@@ -931,8 +928,8 @@ class AddSourceView(CreateView):
                 defaults={'added_by': current_user}
             )
             if created:
-                assign('people.change_alternativepersonname', current_user, alt_name)
-                assign('people.delete_alternativepersonname', current_user, alt_name)
+                assign_perm('people.change_alternativepersonname', current_user, alt_name)
+                assign_perm('people.delete_alternativepersonname', current_user, alt_name)
         except AlternativePersonName.MultipleObjectsReturned:
             alt_name = AlternativePersonName.objects.filter(person=person, display_name=details['name'])[0]
         alt_name.sources.add(self.object)
@@ -947,8 +944,8 @@ class AddSourceView(CreateView):
             rank.sources.add(source)
             rank.save()
             if created:
-                assign('people.change_rank', current_user, rank)
-                assign('people.delete_rank', current_user, rank)
+                assign_perm('people.change_rank', current_user, rank)
+                assign_perm('people.delete_rank', current_user, rank)
         if details['service_no']:
             service_number, created = ServiceNumber.objects.get_or_create(
                 person=person,
@@ -958,8 +955,8 @@ class AddSourceView(CreateView):
             service_number.sources.add(source)
             service_number.save()
             if created:
-                assign('people.change_servicenumber', current_user, service_number)
-                assign('people.delete_servicenumber', current_user, service_number)
+                assign_perm('people.change_servicenumber', current_user, service_number)
+                assign_perm('people.delete_servicenumber', current_user, service_number)
         if details['unit']:
             unit = '{}{}'.format(
                 details['unit'],
@@ -973,8 +970,8 @@ class AddSourceView(CreateView):
                 }
             )
             if created:
-                assign('people.change_organisation', current_user, org)
-                assign('people.delete_organisation', current_user, org)
+                assign_perm('people.change_organisation', current_user, org)
+                assign_perm('people.delete_organisation', current_user, org)
             else:
                 if org.merged_into:
                     org = Organisation.objects.get(id=org.merged_into.id)
@@ -985,8 +982,8 @@ class AddSourceView(CreateView):
                 association=org_association,
                 added_by=current_user
             )
-            assign('people.change_personassociatedorganisation', current_user, person_org)
-            assign('people.delete_personassociatedorganisation', current_user, person_org)
+            assign_perm('people.change_personassociatedorganisation', current_user, person_org)
+            assign_perm('people.delete_personassociatedorganisation', current_user, person_org)
             person_org.sources.add(source)
         cemetery_source, created = Source.objects.get_or_create(
             title='Cemetery details &ndash; {}'.format(details['cemetery']['name'].title()),
@@ -996,8 +993,8 @@ class AddSourceView(CreateView):
             defaults={'added_by': current_user}
         )
         if created:
-            assign('sources.change_source', current_user, cemetery_source)
-            assign('sources.delete_source', current_user, cemetery_source)
+            assign_perm('sources.change_source', current_user, cemetery_source)
+            assign_perm('sources.delete_source', current_user, cemetery_source)
         burial_place, created = Place.objects.get_or_create(
             display_name='{}, {}'.format(details['cemetery']['name'].title(), details['cemetery']['country']),
             defaults={
@@ -1008,8 +1005,8 @@ class AddSourceView(CreateView):
             }
         )
         if created:
-            assign('places.change_place', current_user, burial_place)
-            assign('places.delete_place', current_user, burial_place)
+            assign_perm('places.change_place', current_user, burial_place)
+            assign_perm('places.delete_place', current_user, burial_place)
         else:
             if burial_place.merged_into:
                 burial_place = Place.objects.get(id=burial_place.merged_into.id)
@@ -1040,8 +1037,8 @@ class AddSourceView(CreateView):
                 death.start_earliest_day = True
         death.sources.add(source)
         death.save()
-        assign('people.change_death', current_user, death)
-        assign('people.delete_death', current_user, death)
+        assign_perm('people.change_death', current_user, death)
+        assign_perm('people.delete_death', current_user, death)
         return True
 
 
@@ -1057,11 +1054,11 @@ class UpdateSourceView(PermissionRequiredMixin, UpdateView):
             year = date.year
             month = date.month
             day = date.day
-            #if getattr(self.object, '{}_month_known'.format(name)) is False:
-                #month = 0
-            #if getattr(self.object, '{}_day_known'.format(name)) is False:
-                #day = 0
-            #date = '{}-{}-{}'.format(day, month, year)
+            # if getattr(self.object, '{}_month_known'.format(name)) is False:
+            # month = 0
+            # if getattr(self.object, '{}_day_known'.format(name)) is False:
+            # day = 0
+            # date = '{}-{}-{}'.format(day, month, year)
         return date
 
     def get_initial(self):
@@ -1090,7 +1087,7 @@ class UpdateSourceView(PermissionRequiredMixin, UpdateView):
                     person=person,
                     source=self.object,
                     association=association).exists():
-                    PersonAssociatedSource.objects.create(
+                PersonAssociatedSource.objects.create(
                     person=person,
                     source=self.object,
                     association=association,
@@ -1120,7 +1117,7 @@ class UpdateSourceView(PermissionRequiredMixin, UpdateView):
         context = self.get_context_data()
         images = context['images']
         if images.is_valid() and form.is_valid():
-            #organisations = form.cleaned_data['organisations']
+            # organisations = form.cleaned_data['organisations']
             source = form.save(commit=False)
             source.save()
             self.object = source
@@ -1142,8 +1139,8 @@ class UpdateSourceView(PermissionRequiredMixin, UpdateView):
             self.associate_people(main_people, primary_topic)
             self.associate_people(other_people, topic)
             '''
-            #for organisation in organisations:
-             #   link.person_set.add(Organisation.objects.get(id=int(organisation)))
+            # for organisation in organisations:
+            #   link.person_set.add(Organisation.objects.get(id=int(organisation)))
             return HttpResponseRedirect(reverse('source-view', args=[source.id]))
         else:
             return self.render_to_response(self.get_context_data(form=form))
@@ -1228,8 +1225,8 @@ class AddStory(CreateView):
         obj.added_by = self.request.user
         obj.save()
         self.object = obj
-        assign('source.change_story', self.request.user, obj)
-        assign('source.delete_story', self.request.user, obj)
+        assign_perm('source.change_story', self.request.user, obj)
+        assign_perm('source.delete_story', self.request.user, obj)
         for referer in self.referers:
             self.update_referer(referer)
         return HttpResponseRedirect(reverse('story-update', args=[obj.id]))
@@ -1255,9 +1252,10 @@ class UpdateStory(PermissionRequiredMixin, UpdateView):
         return date
 
     def get_initial(self):
-        initial = {}
-        initial['start_earliest_date'] = self.prepare_date('start_earliest_date')
-        initial['end_earliest_date'] = self.prepare_date('end_earliest_date')
+        initial = {
+            'start_earliest_date': self.prepare_date('start_earliest_date'),
+            'end_earliest_date': self.prepare_date('end_earliest_date')
+        }
         return initial
 
     def get_success_url(self):
@@ -1275,4 +1273,3 @@ class DeleteStory(PermissionRequiredMixin, DeleteView):
 
     def get_success_url(self):
         return reverse_lazy('story-list')
-

@@ -1,27 +1,24 @@
-from django.urls import include, re_path, path
 from django.conf.urls import url
 from django.contrib import admin
-from django.conf import settings
 from django.conf.urls.static import static
+from django.urls import include, re_path, path
 
+from app.base.views import *
 from app.people.views import *
 from app.sources.views import *
 from app.places.views import *
 from app.memorials.views import *
-from app.base.views import *
-
 
 admin.autodiscover()
 
+# Examples:
+# url(r'^$', 'mosman1418.views.home', name='home'),
+# url(r'^mosman1418/', include('mosman1418.foo.urls')),
 
-    # Examples:
-    # url(r'^$', 'mosman1418.views.home', name='home'),
-    # url(r'^mosman1418/', include('mosman1418.foo.urls')),
+# Uncomment the admin/doc line below to enable admin documentation:
+# url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
 
-    # Uncomment the admin/doc line below to enable admin documentation:
-    # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
-
-    # Uncomment the next line to enable the admin:
+# Uncomment the next line to enable the admin:
 
 # app.sources.views
 urlpatterns = [
@@ -32,11 +29,14 @@ urlpatterns = [
     url(r'^sources/(?P<id>\d+)\.(?P<format>(html|rdf|json|ttl))/$', SourceView.as_view()),
     url(r'^sources/(?P<id>\d+)/$', SourceView.as_view(), name='source-view'),
     url(r'^sources/add/$', AddSourceView.as_view(), name='source-add'),
-    #url(r'^sources/add/(?P<entity_type>person)/(?P<entity_id>\d+)/$', AddSourceView.as_view(), name='source-add-person'),
-    url(r'^sources/add/(?P<entity_type>(person|mainperson|organisation|birth|death|lifeevent|name|rank|servicenumber|story|relationship|membership|address))/(?P<entity_id>\d+)/$', AddSourceView.as_view(), name='source-add-entity'),
-    url(r'^sources/add/associations/(?P<assoc_type>(people|organisations|address|personorganisation))/(?P<assoc_id>\d+)/$', AddSourceView.as_view(), name='source-add-association'),
+    # url(r'^sources/add/(?P<entity_type>person)/(?P<entity_id>\d+)/$', AddSourceView.as_view(), name='source-add-person'),
+    url(r'^sources/add/(?P<entity_type>(person|mainperson|organisation|birth|death|lifeevent|name|rank|servicenumber|story|relationship|membership|address))/(?P<entity_id>\d+)/$',
+        AddSourceView.as_view(), name='source-add-entity'),
+    url(r'^sources/add/associations/(?P<assoc_type>(people|organisations|address|personorganisation))/(?P<assoc_id>\d+)/$',
+        AddSourceView.as_view(), name='source-add-association'),
     url(r'^sources/(?P<pk>\d+)/update/$', UpdateSourceView.as_view(), name='source-update'),
-    url(r'^sources/add/(?P<source_type>(collection|part))/(?P<source_id>\d+)/$', AddSourceView.as_view(), name='source-add-source'),
+    url(r'^sources/add/(?P<source_type>(collection|part))/(?P<source_id>\d+)/$', AddSourceView.as_view(),
+        name='source-add-source'),
     url(r'^sources/(?P<pk>\d+)/delete/$', DeleteSource.as_view(), name='source-delete'),
 
     url(r'^images/$', ImageListView.as_view(), name="image-list"),
@@ -54,7 +54,8 @@ urlpatterns = [
 
 # app.people.views
 urlpatterns += [
-    url(r'^sources/(?P<source_id>\d+)/(?P<creator_type>(author|editor))/add/$', AddPerson.as_view(), name='source-creator-add'),
+    url(r'^sources/(?P<source_id>\d+)/(?P<creator_type>(author|editor))/add/$', AddPerson.as_view(),
+        name='source-creator-add'),
     url(r'^people/$', PersonListView.as_view(), name="people-list"),
     url(r'^people/(?P<letter>[a-zA-Z]{1})/$', PersonListView.as_view(), name="people-alpha-list"),
     url(r'^people/results\.(?P<format>(html|rdf|json|ttl))/$', PersonListView.as_view()),
@@ -68,7 +69,8 @@ urlpatterns += [
     url(r'^people/(?P<pk>\d+)/update/$', UpdatePerson.as_view(), name="person-update"),
     url(r'^people/(?P<person_id>\d+)/add/$', AddPerson.as_view(), name="person-add-person"),
     url(r'^people/suggest/$', SuggestPerson.as_view(), name="person-suggest"),
-    url(r'^people/suggest/(?P<person_id>\d+)/thanks/$', SuggestPersonResponse.as_view(), name="person-suggest-response"),
+    url(r'^people/suggest/(?P<person_id>\d+)/thanks/$', SuggestPersonResponse.as_view(),
+        name="person-suggest-response"),
     url(r'^people/(?P<pk>\d+)/approve/$', ApprovePerson.as_view(), name="person-approve"),
     url(r'^people/suggested/$', SuggestedPersonListView.as_view(), name="people-suggested-list"),
     url(r'^people/(?P<id>\d+)/merge/$', PersonMergeView.as_view(), name="person-merge"),
@@ -78,11 +80,13 @@ urlpatterns += [
     url(r'^organisations/(?P<id>\d+)\.(?P<format>(html|rdf|json|ttl))/$', OrganisationView.as_view()),
     url(r'^organisations/(?P<id>\d+)/$', OrganisationView.as_view(), name='organisation-view'),
     url(r'^organisations/(?P<letter>[a-zA-Z]{1})/$', OrganisationListView.as_view(), name="organisation-alpha-list"),
-    url(r'^organisations/(?P<letter>[a-zA-Z]{1})/results\.(?P<format>(html|rdf|json|ttl))/$', OrganisationListView.as_view()),
+    url(r'^organisations/(?P<letter>[a-zA-Z]{1})/results\.(?P<format>(html|rdf|json|ttl))/$',
+        OrganisationListView.as_view()),
 
     url(r'^organisations/add/$', AddOrganisation.as_view(), name="organisation-add"),
     url(r'^organisations/(?P<pk>\d+)/update/$', UpdateOrganisation.as_view(), name="organisation-update"),
-    url(r'^organisations/add/(?P<entity_type>(person|personorganisation))/(?P<entity_id>\d+)/$', AddOrganisation.as_view(), name='organisation-add-entity'),
+    url(r'^organisations/add/(?P<entity_type>(person|personorganisation))/(?P<entity_id>\d+)/$',
+        AddOrganisation.as_view(), name='organisation-add-entity'),
     url(r'^organisations/(?P<pk>\d+)/delete/$', DeleteOrganisation.as_view(), name='organisation-delete'),
     url(r'^organisations/(?P<id>\d+)/merge/$', OrganisationMergeView.as_view(), name="organisation-merge"),
 
@@ -128,15 +132,21 @@ urlpatterns += [
 
     url(r'^people/relationships/(?P<id>\d+)\.(?P<format>(html|rdf|json|ttl))/$', PersonRelationshipView.as_view()),
     url(r'^people/relationships/(?P<id>\d+)/$', PersonRelationshipView.as_view(), name='person-relationship-view'),
-    url(r'^people/relationships/(?P<pk>\d+)/update/$', UpdatePersonAssociatedPerson.as_view(), name='persontoperson-update'),
-    url(r'^people/(?P<person_id>\d+)/relationships/add/$', AddPersonAssociatedPerson.as_view(), name='persontoperson-add'),
-    url(r'^people/relationships/(?P<pk>\d+)/delete/$', DeletePersonAssociatedPerson.as_view(), name='persontoperson-delete'),
+    url(r'^people/relationships/(?P<pk>\d+)/update/$', UpdatePersonAssociatedPerson.as_view(),
+        name='persontoperson-update'),
+    url(r'^people/(?P<person_id>\d+)/relationships/add/$', AddPersonAssociatedPerson.as_view(),
+        name='persontoperson-add'),
+    url(r'^people/relationships/(?P<pk>\d+)/delete/$', DeletePersonAssociatedPerson.as_view(),
+        name='persontoperson-delete'),
 
     url(r'^people/memberships/(?P<id>\d+)\.(?P<format>(html|rdf|json|ttl))/$', PersonMembershipView.as_view()),
     url(r'^people/memberships/(?P<id>\d+)/$', PersonMembershipView.as_view(), name='person-membership-view'),
-    url(r'^people/memberships/(?P<pk>\d+)/update/$', UpdatePersonAssociatedOrganisation.as_view(), name='personorganisation-update'),
-    url(r'^people/(?P<person_id>\d+)/memberships/add/$', AddPersonAssociatedOrganisation.as_view(), name='personorganisation-add'),
-    url(r'^people/memberships/(?P<pk>\d+)/delete/$', DeletePersonAssociatedOrganisation.as_view(), name='personorganisation-delete'),
+    url(r'^people/memberships/(?P<pk>\d+)/update/$', UpdatePersonAssociatedOrganisation.as_view(),
+        name='personorganisation-update'),
+    url(r'^people/(?P<person_id>\d+)/memberships/add/$', AddPersonAssociatedOrganisation.as_view(),
+        name='personorganisation-add'),
+    url(r'^people/memberships/(?P<pk>\d+)/delete/$', DeletePersonAssociatedOrganisation.as_view(),
+        name='personorganisation-delete'),
 
     url(r'^people/addresses/(?P<id>\d+)\.(?P<format>(html|rdf|json|ttl))/$', PersonAddressView.as_view()),
     url(r'^people/addresses/(?P<id>\d+)/$', PersonAddressView.as_view(), name='personaddress-view'),
@@ -151,7 +161,8 @@ urlpatterns += [
     url(r'^places/(?P<id>\d+)/$', PlaceView.as_view(), name='place-view'),
     url(r'^places/(?P<id>\d+)\.(?P<format>(html|rdf|json|ttl))/$', PlaceView.as_view()),
     url(r'^places/(?P<pk>\d+)/update/$', UpdatePlace.as_view(), name='place-update'),
-    url(r'^places/add/(?P<entity_type>(births|deaths|address))/(?P<entity_id>\d+)/$', AddPlace.as_view(), name='place-add-entity'),
+    url(r'^places/add/(?P<entity_type>(births|deaths|address))/(?P<entity_id>\d+)/$', AddPlace.as_view(),
+        name='place-add-entity'),
     url(r'^places/add/$', AddPlace.as_view(), name='place-add'),
     url(r'^places/(?P<id>\d+)/merge/$', PlaceMergeView.as_view(), name="place-merge"),
 
@@ -162,7 +173,8 @@ urlpatterns += [
     url(r'^addresses/(?P<pk>\d+)/update/$', UpdateAddress.as_view(), name='address-update'),
     url(r'^addresses/add/$', AddAddress.as_view(), name='address-add'),
     url(r'^addresses/(?P<pk>\d+)/delete/$', DeleteAddress.as_view(), name='address-delete'),
-    url(r'^addresses/add/(?P<entity_type>(person|personaddress))/(?P<entity_id>\d+)/$', AddAddress.as_view(), name='address-add-entity'),
+    url(r'^addresses/add/(?P<entity_type>(person|personaddress))/(?P<entity_id>\d+)/$', AddAddress.as_view(),
+        name='address-add-entity'),
     url(r'^mosmanstreets/$', MosmanStreetListView.as_view(), name="mosmanstreet-list"),
     url(r'^mosmanstreets/results\.(?P<format>(html|rdf|json|ttl))/$', MosmanStreetListView.as_view()),
     url(r'^mosmanstreets/(?P<id>\d+)/$', MosmanStreetView.as_view(), name='mosmanstreet-view'),
@@ -178,9 +190,11 @@ urlpatterns += [
     url(r'^memorials/(?P<id>\d+)\.(?P<format>(html|rdf|json|ttl))/$', MemorialView.as_view(), name='memorial-view'),
     url(r'^memorials/(?P<id>\d+)/photos\.(?P<format>(html|rdf|json|ttl))/$', MemorialPhotosView.as_view()),
     url(r'^memorials/(?P<id>\d+)/photos/$', MemorialPhotosView.as_view(), name='memorial-photos-view'),
-    url(r'^memorials/(?P<memorial_id>\d+)/names/results\.(?P<format>(html|rdf|json|ttl))/$', MemorialNamesView.as_view()),
+    url(r'^memorials/(?P<memorial_id>\d+)/names/results\.(?P<format>(html|rdf|json|ttl))/$',
+        MemorialNamesView.as_view()),
     url(r'^memorials/(?P<memorial_id>\d+)/names/$', MemorialNamesView.as_view(), name='memorial-names-list'),
-    url(r'^memorials/parts/(?P<part_id>\d+)/results\.(?P<format>(html|rdf|json|ttl))/$', MemorialPartNamesView.as_view()),
+    url(r'^memorials/parts/(?P<part_id>\d+)/results\.(?P<format>(html|rdf|json|ttl))/$',
+        MemorialPartNamesView.as_view()),
     url(r'^memorials/parts/(?P<part_id>\d+)/$', MemorialPartNamesView.as_view(), name='memorial-part-names-list'),
 ]
 urlpatterns += [
@@ -190,13 +204,13 @@ urlpatterns += [
     url(r'^accounts/', include('django_registration.backends.activation.urls')),
     url(r'^accounts/', include('django.contrib.auth.urls')),
     url(r'^ckeditor/', include('ckeditor_uploader.urls')),
-    #url(r'^', include('cms.urls')),
-    #url(r'^', include('filer.server.urls')),
+    # url(r'^', include('cms.urls')),
+    # url(r'^', include('filer.server.urls')),
 ]
 
 urlpatterns += [
-   url(r'^admin/', admin.site.urls),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+                   url(r'^admin/', admin.site.urls),
+               ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 urlpatterns += [
     url(r"^select2/", include("django_select2.urls")),
@@ -204,16 +218,19 @@ urlpatterns += [
 
 if settings.DEBUG:
     import debug_toolbar
+
     urlpatterns = [
-        path('__debug__/', include(debug_toolbar.urls)),
-
-        # For django versions before 2.0:
-        # url(r'^__debug__/', include(debug_toolbar.urls)),
-
-    ] + urlpatterns
-    urlpatterns = static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) + urlpatterns
+                      path('__debug__/', include(debug_toolbar.urls)),
+                  ] + urlpatterns
+    urlpatterns = static(
+        settings.MEDIA_URL,
+        document_root=settings.MEDIA_ROOT
+    ) + static(
+        settings.MEDIA_URL,
+        document_root=settings.MEDIA_ROOT
+    ) + urlpatterns
     # urlpatterns = [
-        
+
     # url(r'^media/(?P<path>.*)$', 'django.views.static.serve',
     #     {'document_root': settings.MEDIA_ROOT, 'show_indexes': True}),
     # url(r'', include('django.contrib.staticfiles.urls')),
