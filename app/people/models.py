@@ -106,7 +106,7 @@ class Person(GenericPerson):
         return summary
 
     class Meta:
-        ordering = ['family_name', 'other_names']
+        ordering = ['other_names', 'family_name']
         permissions = (('approve_person', 'Approve person'), ('merge_person', 'Merge person'))
 
     def get_absolute_url(self):
