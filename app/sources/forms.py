@@ -1,3 +1,4 @@
+import re
 import json
 import datetime
 
@@ -5,7 +6,6 @@ from urllib.request import urlopen
 
 from django import forms
 from django.forms import ModelForm
-from django.forms.widgets import SelectDateWidget
 from django.forms.models import inlineformset_factory
 from django_select2.forms import (ModelSelect2Widget, ModelSelect2MultipleWidget)
 
@@ -13,7 +13,7 @@ from ckeditor.widgets import CKEditorWidget
 
 from app.sources.models import *
 from app.people.models import *
-from app.generic.forms import DateSelectMixin, ShortDateForm
+from app.generic.forms import DateSelectMixin, ShortDateForm, NewSelectDateWidget
 
 from cwgctools.client import CWGCClient
 from rstools.client import RSItemClient, RSSeriesClient
@@ -28,10 +28,6 @@ def get_range_upper_year():
 
 
 YEARS = [year for year in range(1850, get_range_upper_year())]
-
-
-class NewSelectDateWidget(SelectDateWidget):
-    none_value = (0, 'unknown')
 
 
 class PeopleMultiChoices(ModelSelect2MultipleWidget):
@@ -75,7 +71,7 @@ class SourceImageForm(ModelForm):
 ImageFormSet = inlineformset_factory(Source, SourceImage, form=SourceImageForm, extra=1)
 
 
-class AddSourceForm(ModelForm, DateSelectMixin):
+class AddSourceForm(DateSelectMixin, ModelForm):
     categories = (
         ('website', 'website'),
         ('webpage', 'webpage'),
@@ -169,14 +165,6 @@ class AddSourceForm(ModelForm, DateSelectMixin):
 
     def clean(self):
         cleaned_data = super(AddSourceForm, self).clean()
-        publication_date = cleaned_data['publication_date']
-        publication_date_end = cleaned_data['publication_date_end']
-        cleaned_data['publication_date_month_known'] = self.clean_month(publication_date, 'start')
-        cleaned_data['publication_date_day_known'] = self.clean_day(publication_date, 'start')
-        cleaned_data['publication_date_end_month_known'] = self.clean_month(publication_date_end, 'end')
-        cleaned_data['publication_date_end_day_known'] = self.clean_day(publication_date_end, 'end')
-        cleaned_data['publication_date'] = self.clean_date(publication_date, 'start')
-        cleaned_data['publication_date_end'] = self.clean_date(publication_date_end, 'end')
         if 'category' in cleaned_data:
             category = cleaned_data['category']
             if category == 'trove' or category == 'naa' or category == 'awm' or category == 'cwgc':
@@ -386,36 +374,19 @@ class AddSourceForm(ModelForm, DateSelectMixin):
         }
 
 
-class UpdateSourceForm(ModelForm, DateSelectMixin):
+class UpdateSourceForm(DateSelectMixin, ModelForm):
     publication_date = forms.CharField(widget=NewSelectDateWidget(
         attrs={'class': 'input-small'},
         years=YEARS), required=False)
     publication_date_end = forms.CharField(widget=NewSelectDateWidget(
         attrs={'class': 'input-small'},
         years=YEARS), required=False)
-    # main_people = PeopleMultiChoices(required=False)
-    # other_people = PeopleMultiChoices(required=False)
     collection = CollectionChoice(required=False)
     repository = RepositoryChoice(required=False)
 
-    # authors = AuthorMultiChoices(required=False)
-    # editors = AuthorMultiChoices(required=False)
-
-    def clean(self):
-        cleaned_data = super(UpdateSourceForm, self).clean()
-        publication_date = cleaned_data['publication_date']
-        publication_date_end = cleaned_data['publication_date_end']
-        cleaned_data['publication_date_month_known'] = self.clean_month(publication_date, 'start')
-        cleaned_data['publication_date_day_known'] = self.clean_day(publication_date, 'start')
-        cleaned_data['publication_date_end_month_known'] = self.clean_month(publication_date_end, 'end')
-        cleaned_data['publication_date_end_day_known'] = self.clean_day(publication_date_end, 'end')
-        cleaned_data['publication_date'] = self.clean_date(publication_date, 'start')
-        cleaned_data['publication_date_end'] = self.clean_date(publication_date_end, 'end')
-        return cleaned_data
-
     class Meta:
         model = Source
-        exclude = ('added_by',)
+        exclude = ('added_by', 'creators', 'collection')
         widgets = {
             'title': forms.TextInput(attrs={'class': 'input-xlarge'}),
             'url': forms.TextInput(attrs={'class': 'input-xlarge'}),

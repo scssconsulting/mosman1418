@@ -1062,13 +1062,14 @@ class UpdateSourceView(PermissionRequiredMixin, UpdateView):
         return date
 
     def get_initial(self):
-        initial = {}
-        initial['publication_date'] = self.prepare_date('publication_date')
-        initial['publication_date_end'] = self.prepare_date('publication_date_end')
-        initial['authors'] = self.object.authors()
-        initial['editors'] = self.object.editors()
-        initial['main_people'] = self.object.main_people()
-        initial['other_people'] = self.object.other_people()
+        initial = {
+            'publication_date': self.prepare_date('publication_date'),
+            'publication_date_end': self.prepare_date('publication_date_end'),
+            'authors': self.object.authors(),
+            'editors': self.object.editors(),
+            'main_people': self.object.main_people(),
+            'other_people': self.object.other_people()
+        }
         return initial
 
     def get_context_data(self, **kwargs):

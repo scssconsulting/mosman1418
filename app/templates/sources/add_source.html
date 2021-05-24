@@ -3,20 +3,21 @@
 {% load thumbnail %}
 {% block title %}Log in{% endblock %}
 {% block head_scripts %}
-<script src="{% static 'ckeditor/ckeditor/ckeditor.js' %}"></script>
+<script type="text/javascript" src='{% static "ckeditor/ckeditor-init.js" %}'></script>
+<script type="text/javascript" src='{% static "ckeditor/ckeditor/ckeditor.js" %}'></script>
 {% endblock %}
 {% block extra_scripts %}
-<script src="{% static 'js/select2.min.js' %}"></script>
-<script src="{% static 'js/add-source.js' %}"></script>
+<!--<script src="{% static 'js/select2.min.js' %}"></script>-->
+<!--<script src="{% static 'js/add-source.js' %}"></script>-->
 {% endblock %}
 {% block extra_styles %}
-<link href="{% static 'css/select2.css' %}" type="text/css" media="screen" rel="stylesheet" />
+<!--<link href="{% static 'css/select2.css' %}" type="text/css" media="screen" rel="stylesheet" />-->
 {% endblock %}
 {% block content %}
     <div class="row">
         {% with current='sources' %}{% include '_sidenav.html' %}{% endwith %}
         <div class="span8">
-           
+
             <h2>{% if link_id %}Edit{% else %}Add{% endif %} a source</h2>
 
             <form action="." method="post" enctype="multipart/form-data" class="form-horizontal">{% csrf_token %}
@@ -159,7 +160,7 @@
                     <!--<fieldset id="creators">
                         <legend>Creators</legend>
                         {% url 'source-creator-add' source_id=source.id creator_type='author' as author_link %}
-                        
+
                         {% with label='Authors' field=form.authors create_url=author_link create_type='author' %}
                             {% include '_form_field.html' %}
                         {% endwith %}

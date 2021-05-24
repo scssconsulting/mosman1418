@@ -2,17 +2,14 @@ import datetime
 
 from django import forms
 from django.forms import ModelForm
-from django.forms.widgets import SelectDateWidget
 
 from ckeditor.widgets import CKEditorWidget
-from django_select2.forms import (
-    ModelSelect2Widget, ModelSelect2MultipleWidget
-)
+from django_select2.forms import ModelSelect2Widget, ModelSelect2MultipleWidget
 
 from app.people.models import *
 from app.places.models import *
 from app.sources.models import *
-from app.generic.forms import AddEventForm, DateSelectMixin, ShortDateForm
+from app.generic.forms import AddEventForm, DateSelectMixin, ShortDateForm, NewSelectDateWidget
 
 
 def get_range_upper_year():
@@ -21,10 +18,6 @@ def get_range_upper_year():
 
 
 YEARS = [year for year in range(1850, get_range_upper_year())]
-
-
-class NewSelectDateWidget(SelectDateWidget):
-    none_value = (0, 'unknown')
 
 
 class PeopleMultiChoice(ModelSelect2MultipleWidget):
@@ -89,22 +82,6 @@ class AddPersonForm(DateSelectMixin, ModelForm):
 
     def clean(self):
         cleaned_data = super(AddPersonForm, self).clean()
-        birth_earliest_date = cleaned_data['birth_earliest_date']
-        birth_latest_date = cleaned_data['birth_latest_date']
-        cleaned_data['birth_earliest_month_known'] = self.clean_month(birth_earliest_date, 'start')
-        cleaned_data['birth_earliest_day_known'] = self.clean_day(birth_earliest_date, 'start')
-        cleaned_data['birth_latest_month_known'] = self.clean_month(birth_latest_date, 'end')
-        cleaned_data['birth_latest_day_known'] = self.clean_day(birth_latest_date, 'end')
-        cleaned_data['birth_earliest_date'] = self.clean_date(birth_earliest_date, 'start')
-        cleaned_data['birth_latest_date'] = self.clean_date(birth_latest_date, 'end')
-        death_earliest_date = cleaned_data['death_earliest_date']
-        death_latest_date = cleaned_data['death_latest_date']
-        cleaned_data['death_earliest_month_known'] = self.clean_month(death_earliest_date, 'start')
-        cleaned_data['death_earliest_day_known'] = self.clean_day(death_earliest_date, 'start')
-        cleaned_data['death_latest_month_known'] = self.clean_month(death_latest_date, 'end')
-        cleaned_data['death_latest_day_known'] = self.clean_day(death_latest_date, 'end')
-        cleaned_data['death_earliest_date'] = self.clean_date(death_earliest_date, 'start')
-        cleaned_data['death_latest_date'] = self.clean_date(death_latest_date, 'end')
         return cleaned_data
 
     class Meta:
@@ -258,7 +235,7 @@ class AddAssociatedPersonForm(ShortDateForm):
         exclude = ('added_by',)
 
 
-class AddAssociatedOrganisationForm(ModelForm, DateSelectMixin):
+class AddAssociatedOrganisationForm(DateSelectMixin, ModelForm):
     person = forms.ModelChoiceField(
         queryset=Person.objects.all(),
         required=False,
@@ -272,18 +249,6 @@ class AddAssociatedOrganisationForm(ModelForm, DateSelectMixin):
         years=YEARS), required=False)
     organisation = OrganisationChoice()
     sources = SourcesMultiChoice(required=False)
-
-    def clean(self):
-        cleaned_data = super(AddAssociatedOrganisationForm, self).clean()
-        start_earliest_date = cleaned_data['start_earliest_date']
-        cleaned_data['start_earliest_month'] = self.clean_month(start_earliest_date, 'start')
-        cleaned_data['start_earliest_day'] = self.clean_day(start_earliest_date, 'start')
-        cleaned_data['start_earliest_date'] = self.clean_date(start_earliest_date, 'start')
-        end_earliest_date = cleaned_data['end_earliest_date']
-        cleaned_data['end_earliest_month'] = self.clean_month(end_earliest_date, 'start')
-        cleaned_data['end_earliest_day'] = self.clean_day(end_earliest_date, 'start')
-        cleaned_data['end_earliest_date'] = self.clean_date(end_earliest_date, 'start')
-        return cleaned_data
 
     class Meta:
         model = PersonAssociatedOrganisation

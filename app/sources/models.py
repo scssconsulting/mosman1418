@@ -4,10 +4,8 @@ from django.db import models
 from django.urls import reverse
 from unidecode import unidecode
 
-from app.linkeddata.models import RDFClass, RDFRelationship, RDFType
+from app.linkeddata.models import RDFRelationship, RDFType
 from app.generic.models import StandardMetadata, ShortDateMixin
-
-# Create your models here.
 
 
 class Source(StandardMetadata):
@@ -22,10 +20,13 @@ class Source(StandardMetadata):
     publication_date_end = models.DateField(blank=True, null=True)
     publication_date_end_month_known = models.BooleanField(default=False)
     publication_date_end_day_known = models.BooleanField(default=False)
-    collection = models.ForeignKey('Source', on_delete=models.CASCADE, blank=True, null=True, related_name='collection_source')
+    collection = models.ForeignKey('Source', on_delete=models.CASCADE, blank=True, null=True,
+                                   related_name='collection_source')
     collection_title = models.CharField(max_length=250, blank=True, null=True)
-    collection_item_id = models.CharField(max_length=100, blank=True, null=True)  # Identifier within context of a specific collection, eg file number
-    repository_item_id = models.CharField(max_length=100, blank=True, null=True)  # Identifier within context of repository, eg barcode
+    collection_item_id = models.CharField(max_length=100, blank=True,
+                                          null=True)  # Identifier within context of a specific collection, eg file number
+    repository_item_id = models.CharField(max_length=100, blank=True,
+                                          null=True)  # Identifier within context of repository, eg barcode
     repository = models.ForeignKey('people.Repository', on_delete=models.CASCADE, blank=True, null=True)
     citation = models.CharField(max_length=250, blank=True, null=True)
     pages = models.CharField(max_length=50, blank=True, null=True)
@@ -48,46 +49,46 @@ class Source(StandardMetadata):
     def main_people(self):
         return [relation.person for relation in
                 self.personassociatedsource_set
-                .filter(association__label='primary topic of')]
+                    .filter(association__label='primary topic of')]
 
     def other_people(self):
         return [relation.person for relation in
                 self.personassociatedsource_set
-                .filter(association__label='topic of')]
+                    .filter(association__label='topic of')]
 
     def main_subjects(self):
         people = [relation.person for relation in
-                    self.personassociatedsource_set
-                        .filter(association__label='primary topic of')]
+                  self.personassociatedsource_set
+                      .filter(association__label='primary topic of')]
         orgs = [
             relation.organisation for relation in
             self.organisationassociatedsource_set
-            .filter(association__label='primary topic of')
+                .filter(association__label='primary topic of')
         ]
         places = list(self.place_set.all())
-        #stories = list(self.story_set.all())
-        return people + orgs + places 
+        # stories = list(self.story_set.all())
+        return people + orgs + places
 
     def other_subjects(self):
         people = [relation.person for relation in
-                    self.personassociatedsource_set
-                    .filter(association__label='topic of')]
+                  self.personassociatedsource_set
+                      .filter(association__label='topic of')]
         orgs = [relation.organisation for relation in
-                    self.organisationassociatedsource_set
+                self.organisationassociatedsource_set
                     .filter(association__label='topic of')]
         return people + orgs
 
     def evidence_for(self):
         entities = []
-        #entities.extend(list(self.alternativepersonname_set.all()))
-        #entities.extend(list(self.rank_set.all()))
-        #entities.extend(list(self.servicenumber_set.all()))
-        #entities.extend(list(self.birth_set.all()))
-        #entities.extend(list(self.death_set.all()))
-        #entities.extend(list(self.lifeevent_set.all()))
-        #entities.extend(list(self.personassociatedperson_set.all()))
-        #entities.extend(list(self.personassociatedorganisation_set.all()))
-        #entities.extend(list(self.personaddress_set.all()))
+        # entities.extend(list(self.alternativepersonname_set.all()))
+        # entities.extend(list(self.rank_set.all()))
+        # entities.extend(list(self.servicenumber_set.all()))
+        # entities.extend(list(self.birth_set.all()))
+        # entities.extend(list(self.death_set.all()))
+        # entities.extend(list(self.lifeevent_set.all()))
+        # entities.extend(list(self.personassociatedperson_set.all()))
+        # entities.extend(list(self.personassociatedorganisation_set.all()))
+        # entities.extend(list(self.personaddress_set.all()))
         return entities
 
     def formatted_date(self, date_name):
@@ -130,7 +131,8 @@ class Story(StandardMetadata, ShortDateMixin):
     title = models.CharField(max_length=200)
     text = models.TextField()
     credit = models.TextField(blank=True, null=True)
-    #sources = models.ManyToManyField('sources.Source', blank=True)
+
+    # sources = models.ManyToManyField('sources.Source', blank=True)
 
     def subjects(self):
         people = list(self.person_set.all())

@@ -13,7 +13,6 @@ from guardian.mixins import PermissionRequiredMixin
 from rdflib import Graph
 from rdflib import Namespace, Literal, URIRef
 
-import settings
 from app.people.forms import *
 from app.memorials.models import *
 from app.linkeddata.views import LinkedDataView, LinkedDataListView, RDFSchema
