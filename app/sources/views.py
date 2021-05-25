@@ -1,5 +1,3 @@
-import re
-
 from urllib.error import URLError, HTTPError
 
 from django.shortcuts import render
@@ -156,49 +154,49 @@ class StoryListView(LinkedDataListView):
         return graph
 
 
-def get_trove_newspaper(url):
-    details = {}
-    patterns = [
-        re.compile(r'http://trove.nla.gov.au/ndp/del/article/(\d+)'),
-        re.compile(r'http://nla.gov.au/nla.news-article(\d+)')
-    ]
-    for pattern in patterns:
-        try:
-            id = pattern.search(url).group(1)
-            break
-        except AttributeError:
-            raise
-    trove_url = 'http://api.trove.nla.gov.au/newspaper/%s?key=%s&encoding=json' % (id, TROVE_API_KEY)
-    response = get_url(trove_url)
-    data = json.load(response)
-    details['title'] = data['article']['heading']
-    details['newspaper'] = data['article']['title']['value']
-    details['newspaper_id'] = data['article']['title']['id']
-    details['date'] = data['article']['date']
-    details['page'] = data['article']['page']
-    details['url'] = data['article']['troveUrl']
-    return details
+# def get_trove_newspaper(url):
+#     details = {}
+#     patterns = [
+#         re.compile(r'http://trove.nla.gov.au/ndp/del/article/(\d+)'),
+#         re.compile(r'http://nla.gov.au/nla.news-article(\d+)')
+#     ]
+#     for pattern in patterns:
+#         try:
+#             id = pattern.search(url).group(1)
+#             break
+#         except AttributeError:
+#             raise
+#     trove_url = 'http://api.trove.nla.gov.au/newspaper/%s?key=%s&encoding=json' % (id, TROVE_API_KEY)
+#     response = get_url(trove_url)
+#     data = json.load(response)
+#     details['title'] = data['article']['heading']
+#     details['newspaper'] = data['article']['title']['value']
+#     details['newspaper_id'] = data['article']['title']['id']
+#     details['date'] = data['article']['date']
+#     details['page'] = data['article']['page']
+#     details['url'] = data['article']['troveUrl']
+#     return details
 
 
-def get_url(url):
-    '''
-    Retrieve page.
-    '''
-    response = urlopen(url)
-    return response
+# def get_url(url):
+#     """
+#     Retrieve page.
+#     """
+#     response = urlopen(url)
+#     return response
 
 
-def add_trove_newspaper(source, url):
-    details = get_trove_newspaper(url)
-    source.title = details['title']
-    source.collection_title = details['newspaper']
-    source.pages = details['page']
-    source.publication_date = details['date']
-    source.publication_date_month = True
-    source.publication_date_day = True
-    source.url = details['url']
-    source.save()
-
+# def add_trove_newspaper(source, url):
+#     details = get_trove_newspaper(url)
+#     source.title = details['title']
+#     source.collection_title = details['newspaper']
+#     source.pages = details['page']
+#     source.publication_date = details['date']
+#     source.publication_date_month = True
+#     source.publication_date_day = True
+#     source.url = details['url']
+#     source.save()
+#
 
 class AddSourceView(CreateView):
     template_name = 'sources/add_source.html'
