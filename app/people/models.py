@@ -216,7 +216,7 @@ class LifeEvent(Event):
     def __str__(self):
         return '{} {} {}'.format(
             self.person,
-            '{}{}'.format() if self.label[0] else '',
+            self.label or '',
             '({})'.format(self.date_summary()) if self.date_summary() else ''
         )
 

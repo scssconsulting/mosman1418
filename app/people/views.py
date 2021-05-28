@@ -15,67 +15,9 @@ from rdflib import Namespace, Literal, URIRef
 
 from app.people.forms import *
 from app.memorials.models import *
-from app.linkeddata.views import LinkedDataView, LinkedDataListView, RDFSchema
+from app.linkeddata.models import RDFSchema
+from app.linkeddata.views import LinkedDataView, LinkedDataListView
 
-
-# TROVE_API_KEY = 'ierj9cpsh7f5u7kg'
-
-
-# def check_date(date, typ):
-#     month_known = True
-#     day_known = True
-#     year, month, day = date.split('-')
-#     if int(month) == 0:
-#         month_known = False
-#         day_known = False
-#         if type == 'start':
-#             month = '01'
-#             day = '01'
-#         elif type == 'end':
-#             month = '12'
-#             day = '31'
-#     else:
-#         if int(day) == 0:
-#             day_known = False
-#             if type == 'start':
-#                 day = '01'
-#             elif type == 'end':
-#                 day = monthrange(int(year), int(month))[1]
-#     return {'date': '%s-%s-%s' % (year, month, day), 'month_known': month_known, 'day_known': day_known}
-
-
-# def get_naa_details(barcode):
-#     br = mechanize.Browser()
-#     br.addheaders = [('User-agent', 'Mozilla/5.0 (Windows; U; Windows NT 6.0; en-US; rv:1.9.0.6')]
-#     br.set_handle_robots(False)
-#     url = 'http://www.naa.gov.au/cgi-bin/Search?O=I&Number=%s' % barcode
-#     response1 = br.open(url)
-#     # Recordsearch returns a page with a form that submits on page load.
-#     # Have to make sure the session id is submitted with the form.
-#     # Extract the session id.
-#     session_id = re.search(r"value={(.*)}", response1.read()).group(1)
-#     br.select_form(name="t")
-#     br.form.set_all_readonly(False)
-#     # Add session id to the form.
-#     br.form['NAASessionID'] = '{%s}' % session_id
-#     response2 = br.submit()
-#     soup = BeautifulSoup(response2.read())
-#     try:
-#         series = unicode(soup.find('div', text='Series number').parent.next_sibling.next_sibling.a.string)
-#         control = unicode(soup.find('div', text='Control symbol').parent.next_sibling.next_sibling.string)
-#         title = unicode(soup.find('div', text='Title').parent.next_sibling.next_sibling.string)
-#     except AttributeError:
-#         raise Http404
-#     return {'series': series, 'control': control, 'title': title}
-
-# def prepare_date(date, month_known, day_known):
-#     year, month, day = date.isoformat().split('-')
-#     if month_known is False:
-#         month = '0'
-#     if day_known is False:
-#         day = '0'
-#     return '%s-%s-%s' % (year, month, day)
-#
 
 class PersonView(LinkedDataView):
     model = Person
@@ -929,25 +871,26 @@ class UpdateDeath(PermissionRequiredMixin, UpdateView):
             url = reverse_lazy('person-view', args=[self.object.person.id])
         return url
 
-    def prepare_date(self, name):
-        date = getattr(self.object, name)
-        name = name[:-5]
-        if date:
-            year = date.year
-            month = date.month
-            day = date.day
-            if getattr(self.object, '{}_month'.format(name)) is False:
-                month = 0
-            if getattr(self.object, '{}_day'.format(name)) is False:
-                day = 0
-            date = '{}-{}-{}'.format(year, month, day)
-        return date
+    # def prepare_date(self, name):
+    #     date = getattr(self.object, name)
+    #     name = name[:-5]
+    #     if date:
+    #         year = date.year
+    #         month = date.month
+    #         day = date.day
+    #         if getattr(self.object, '{}_month'.format(name)) is False:
+    #             month = 0
+    #         if getattr(self.object, '{}_day'.format(name)) is False:
+    #             day = 0
+    #         date = '{}-{}-{}'.format(year, month, day)
+    #     return date
 
-    def get_initial(self):
-        initial = {}
-        initial['start_earliest_date'] = self.prepare_date('start_earliest_date')
-        initial['start_latest_date'] = self.prepare_date('start_latest_date')
-        return initial
+    # def get_initial(self):
+    #     initial = {
+    #         'start_earliest_date': self.prepare_date('start_earliest_date'),
+    #         'start_latest_date': self.prepare_date('start_latest_date')
+    #     }
+    #     return initial
 
 
 class DeleteDeath(PermissionRequiredMixin, DeleteView):

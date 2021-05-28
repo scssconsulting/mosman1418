@@ -1,16 +1,16 @@
-# Create your views here.
+from django.urls import reverse_lazy
+from django.http import HttpResponseRedirect
 from django.contrib.sites.models import Site
 from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormView
-from django.urls import reverse, reverse_lazy
-from django.http import HttpResponse, HttpResponseRedirect
-from rdflib import Graph
-from rdflib import Namespace, BNode, Literal, RDF, URIRef
 
-from app.linkeddata.views import LinkedDataView, LinkedDataListView, RDFSchema
-from app.places.models import *
+from rdflib import Graph
+from rdflib import Namespace, Literal, URIRef
+
 from app.places.forms import *
-from app.memorials.models import *
 from app.people.models import *
+from app.memorials.models import *
+from app.linkeddata.models import RDFSchema
+from app.linkeddata.views import LinkedDataView, LinkedDataListView
 
 
 class PlaceView(LinkedDataView):
@@ -208,7 +208,6 @@ class AddAddress(CreateView):
         else:
             self.entity = None
         return HttpResponseRedirect(self.get_success_url())
-
 
     def get_success_url(self):
         if self.entity:

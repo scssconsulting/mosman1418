@@ -1,37 +1,30 @@
-# Create your views here.
-import http.client as httplib
 import itertools
-from django.shortcuts import render_to_response, render
-from django.shortcuts import redirect
+import http.client as httplib
+
 from django.http import HttpResponse
-from django.template import RequestContext
-from django.utils.cache import patch_vary_headers
+from django.shortcuts import render, redirect
 from django.contrib.sites.models import Site
+from django.utils.cache import patch_vary_headers
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 from rdflib.plugin import register, Parser, Serializer
-register('json-ld', Parser, 'rdflib_jsonld.parser', 'JsonLDParser')
-register('json-ld', Serializer, 'rdflib_jsonld.serializer', 'JsonLDSerializer')
-from rdflib import Graph
-from rdflib import Namespace, BNode, Literal, RDF, URIRef
 
-#import rdfextras
-#rdfextras.registerplugins()
 from django_conneg.views import ContentNegotiatedView
 from django_conneg.decorators import renderer
 
-from app.linkeddata.models import *
+register('json-ld', Parser, 'rdflib_jsonld.parser', 'JsonLDParser')
+register('json-ld', Serializer, 'rdflib_jsonld.serializer', 'JsonLDSerializer')
 
 SCHEMAS = {
-            'rdfs': 'http://www.w3.org/2000/01/rdf-schema#',
-            'owl': 'http://www.w3.org/2002/07/owl#',
-            'foaf': 'http://xmlns.com/foaf/0.1/',
-            'dc': 'http://purl.org/dc/terms/',
-            'bio': 'http://purl.org/vocab/bio/0.1/',
-            'geo': 'http://www.w3.org/2003/01/geo/wgs84_pos#',
-            'rel': 'http://purl.org/vocab/relationship/',
-            'graves': 'http://rdf.muninn-project.org/ontologies/graves#'
-            }
+    'rdfs': 'http://www.w3.org/2000/01/rdf-schema#',
+    'owl': 'http://www.w3.org/2002/07/owl#',
+    'foaf': 'http://xmlns.com/foaf/0.1/',
+    'dc': 'http://purl.org/dc/terms/',
+    'bio': 'http://purl.org/vocab/bio/0.1/',
+    'geo': 'http://www.w3.org/2003/01/geo/wgs84_pos#',
+    'rel': 'http://purl.org/vocab/relationship/',
+    'graves': 'http://rdf.muninn-project.org/ontologies/graves#'
+}
 
 
 class LinkedDataView(ContentNegotiatedView):
@@ -129,7 +122,6 @@ class LinkedDataView(ContentNegotiatedView):
     @renderer(format='json', mimetypes=('application/json',), name='JSON')
     def render_json(self, request, context, template_name):
         if context['content']:
-            #data = {'name': context['memorial'].name}
             graph = self.make_graph(context['content'])
             return HttpResponse(graph.serialize(format='json-ld', indent=4), content_type='application/json')
         else:
@@ -204,7 +196,6 @@ class LinkedDataListView(LinkedDataView):
             context['additional_headers'] = {'location': self.path}
             context['content'] = None
             return self.render(request, context, self.template_name)
-        
 
     @renderer(format='html', mimetypes=('text/html', 'application/xhtml+xml'), name='HTML', priority=1)
     def render_html(self, request, context, template_name):
@@ -214,8 +205,5 @@ class LinkedDataListView(LinkedDataView):
             context['identifier'] = identifier
             context['id_path'] = identifier[:-1]
             return render(request, template_name, context)
-            # return render_to_response(template_name, context, context_instance=RequestContext(request), mimetype='text/html')
         else:
             return HttpResponse(content='')
-
-

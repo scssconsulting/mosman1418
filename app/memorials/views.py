@@ -1,14 +1,12 @@
-# Create your views here.
-
-from django.shortcuts import render
-from django.http import HttpResponse
 from django.contrib.sites.models import Site
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from rdflib import Graph
-from rdflib import Namespace, BNode, Literal, RDF, URIRef
 
-from app.linkeddata.views import LinkedDataView, LinkedDataListView, RDFSchema
+from rdflib import Graph
+from rdflib import Namespace, Literal, URIRef
+
 from app.memorials.models import *
+from app.linkeddata.models import RDFSchema
+from app.linkeddata.views import LinkedDataView, LinkedDataListView
 
 
 class MemorialView(LinkedDataView):
@@ -29,10 +27,12 @@ class MemorialView(LinkedDataView):
         graph.add((this_memorial, namespaces['graves']['monument_title'], Literal(memorial.name)))
         for memorial_name in MemorialName.objects.filter(memorial=memorial):
             graph.add((this_memorial, namespaces['graves']['monument_name'], Literal(memorial_name.name)))
-            graph.add((this_memorial, namespaces['graves']['commemorates'], URIRef(host_ns[memorial_name.person.get_absolute_url()])))
+            graph.add((this_memorial, namespaces['graves']['commemorates'],
+                       URIRef(host_ns[memorial_name.person.get_absolute_url()])))
         for source in memorial.memorialassociatedsource_set.all():
             for rdf in source.association.rdf_property.all():
-                graph.add((this_memorial, namespaces[rdf.schema.prefix][rdf.rdf_property], URIRef(host_ns[source.source.get_absolute_url()])))
+                graph.add((this_memorial, namespaces[rdf.schema.prefix][rdf.rdf_property],
+                           URIRef(host_ns[source.source.get_absolute_url()])))
         return graph
 
 
@@ -61,7 +61,7 @@ class MemorialNamesView(LinkedDataListView):
                 format = 'json'
             elif '.rdf' in full_url:
                 format = 'rdf'
-                
+
         if format:
             order_by = request.GET.get('order_by', 'position')
             results = self.model.objects.select_related().filter(memorial=memorial_id)
@@ -94,7 +94,7 @@ class MemorialNamesView(LinkedDataListView):
             namespace = Namespace(schema.uri)
             graph.bind(schema.prefix, namespace)
             namespaces[schema.prefix] = namespace
-        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain))
+        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain,))
         this_memorial = URIRef(host_ns[memorial.get_absolute_url()])
         graph.add((this_memorial, namespaces['graves']['monument_title'], Literal(memorial.name)))
         return graph
@@ -148,7 +148,7 @@ class MemorialPartNamesView(LinkedDataListView):
             namespace = Namespace(schema.uri)
             graph.bind(schema.prefix, namespace)
             namespaces[schema.prefix] = namespace
-        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain))
+        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain,))
         this_memorial = URIRef(host_ns[memorial.get_absolute_url()])
         graph.add((this_memorial, namespaces['graves']['monument_title'], Literal(memorial.name)))
         return graph
@@ -167,7 +167,7 @@ class MemorialPhotosView(LinkedDataView):
             namespace = Namespace(schema.uri)
             graph.bind(schema.prefix, namespace)
             namespaces[schema.prefix] = namespace
-        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain))
+        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain,))
         this_memorial = URIRef(host_ns[memorial.get_absolute_url()])
         graph.add((this_memorial, namespaces['graves']['monument_title'], Literal(memorial.name)))
         return graph
@@ -186,10 +186,9 @@ class MemorialListView(LinkedDataListView):
             namespace = Namespace(schema.uri)
             graph.bind(schema.prefix, namespace)
             namespaces[schema.prefix] = namespace
-        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain))
+        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain,))
         for entity in entities:
             this_person = URIRef(host_ns[entity.get_absolute_url()])
             graph.add((this_person, namespaces['rdf']['type'], namespaces['foaf']['Person']))
             graph.add((this_person, namespaces['rdfs']['label'], Literal(str(entity))))
         return graph
-

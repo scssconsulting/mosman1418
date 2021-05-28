@@ -99,6 +99,9 @@ class DateSelectMixin:
         cleaned_data = super().clean()
         all_date_fields = [f for f in self.fields if isinstance(self.fields[f].widget, NewSelectDateWidget)]
         for date_field in all_date_fields:
+            if not cleaned_data[date_field]:
+                cleaned_data[date_field] = None
+                continue
             date_data = cleaned_data[date_field].split('-')
             if len(date_data) != 3:
                 self.add_error(date_field, "Invalid date.")

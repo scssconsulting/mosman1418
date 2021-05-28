@@ -3,8 +3,6 @@ import calendar
 from django.db import models
 from django.contrib.auth.models import User
 
-# Create your models here.
-
 
 class StandardMetadata(models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
@@ -29,8 +27,12 @@ class ShortDateMixin(models.Model):
     def formatted_date(self, date_name):
         months = calendar.month_name
         date_obj = getattr(self, '{}_date'.format(date_name))
-        month = getattr(self, '{}_month'.format(date_name))
-        day = getattr(self, '{}_day'.format(date_name))
+        if date_obj is None:
+            return None
+        # month = getattr(self, '{}_month'.format(date_name))
+        # day = getattr(self, '{}_day'.format(date_name))
+        month = date_obj.month
+        day = date_obj.day
         if date_obj and month and day:
             date_str = '{} {} {}'.format(date_obj.day, months[date_obj.month], date_obj.year)
         elif date_obj and month:
@@ -166,14 +168,15 @@ class Event(StandardMetadata, LongDateMixin):
 
 
 class Period(Event):
-    '''Period of time.'''
+    """Period of time."""
 
     class Meta:
         abstract = True
 
 
 class URI(StandardMetadata):
-    URI_TYPES = (('html', 'HTML'), ('lod_id', 'LOD id'), ('rdf_xml', 'RDF/XML'), ('rdf_turtle', 'Turtle'), ('json', 'JSON'))
+    URI_TYPES = (
+        ('html', 'HTML'), ('lod_id', 'LOD id'), ('rdf_xml', 'RDF/XML'), ('rdf_turtle', 'Turtle'), ('json', 'JSON'))
     uri = models.URLField()
     uri_type = models.CharField(max_length=20, choices=URI_TYPES, default='html')
 
