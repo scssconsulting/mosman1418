@@ -268,6 +268,9 @@ class AddPersonAddressForm(ShortDateForm):
         widget=forms.Select(attrs={'readonly': 'readonly'})
     )
     sources = SourcesMultiChoice(required=False)
+    address = forms.ModelChoiceField(
+        queryset=Address.objects.select_related('mosman_street', 'place')
+    )
 
     class Meta:
         model = PersonAddress
