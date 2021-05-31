@@ -54,7 +54,7 @@ class Address(StandardMetadata):
     place = models.ForeignKey('places.Place', on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):
-        if self.mosman_street:
+        if self.mosman_street and self.mosman_street.street_name:
             street = self.mosman_street.street_name.strip()
         elif self.street_name:
             street = self.street_name

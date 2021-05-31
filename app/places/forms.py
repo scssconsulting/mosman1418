@@ -1,11 +1,4 @@
 from django import forms
-from django.forms import ModelForm
-from app.people.models import *
-from app.places.models import *
-from app.sources.models import *
-from django.forms.widgets import SelectDateWidget
-from calendar import monthrange
-from django.conf import settings
 
 from django_select2.forms import (
     ModelSelect2Widget, Select2Widget
@@ -31,17 +24,17 @@ class PlaceChoice(ModelSelect2Widget):
     search_fields = ['display_name__istartswith', 'place_name__istartswith']
 
 
-class AddPlaceForm(ModelForm):
+class AddPlaceForm(forms.ModelForm):
     birth_event = BirthChoice(required=False)
     death_event = DeathChoice(required=False)
     life_event = EventChoice(required=False)
 
     class Meta:
         model = Place
-        exclude = ('added_by', )
+        exclude = ('added_by',)
 
 
-class AddAddressForm(ModelForm):
+class AddAddressForm(forms.ModelForm):
     person = forms.ModelChoiceField(
         queryset=Person.objects.all(),
         required=False,
@@ -56,7 +49,7 @@ class AddAddressForm(ModelForm):
 
     class Meta:
         model = Address
-        exclude = ('added_by', )
+        exclude = ('added_by',)
         widgets = {
             'mosman_street': Select2Widget()
         }

@@ -26,7 +26,7 @@ class PlaceView(LinkedDataView):
             namespace = Namespace(schema.uri)
             graph.bind(schema.prefix, namespace)
             namespaces[schema.prefix] = namespace
-        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain))
+        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain,))
         this_person = URIRef(host_ns[entity.get_absolute_url()])
         graph.add((this_person, namespaces['rdf']['type'], namespaces['foaf']['Person']))
         graph.add((this_person, namespaces['rdfs']['label'], Literal(str(entity))))
@@ -48,7 +48,7 @@ class PlaceListView(LinkedDataListView):
             namespace = Namespace(schema.uri)
             graph.bind(schema.prefix, namespace)
             namespaces[schema.prefix] = namespace
-        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain))
+        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain,))
         for entity in entities:
             this_person = URIRef(host_ns[entity.get_absolute_url()])
             graph.add((this_person, namespaces['rdf']['type'], namespaces['foaf']['Person']))
@@ -144,7 +144,7 @@ class AddressView(LinkedDataView):
             namespace = Namespace(schema.uri)
             graph.bind(schema.prefix, namespace)
             namespaces[schema.prefix] = namespace
-        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain))
+        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain,))
         this_person = URIRef(host_ns[entity.get_absolute_url()])
         graph.add((this_person, namespaces['rdf']['type'], namespaces['foaf']['Person']))
         graph.add((this_person, namespaces['rdfs']['label'], Literal(str(entity))))
@@ -164,7 +164,7 @@ class AddressListView(LinkedDataListView):
             namespace = Namespace(schema.uri)
             graph.bind(schema.prefix, namespace)
             namespaces[schema.prefix] = namespace
-        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain))
+        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain,))
         for entity in entities:
             this_person = URIRef(host_ns[entity.get_absolute_url()])
             graph.add((this_person, namespaces['rdf']['type'], namespaces['foaf']['Person']))
@@ -247,7 +247,7 @@ class MosmanStreetView(LinkedDataView):
             namespace = Namespace(schema.uri)
             graph.bind(schema.prefix, namespace)
             namespaces[schema.prefix] = namespace
-        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain))
+        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain,))
         this_person = URIRef(host_ns[entity.get_absolute_url()])
         graph.add((this_person, namespaces['rdf']['type'], namespaces['foaf']['Person']))
         graph.add((this_person, namespaces['rdfs']['label'], Literal(str(entity))))
@@ -267,7 +267,7 @@ class MosmanStreetListView(LinkedDataListView):
             namespace = Namespace(schema.uri)
             graph.bind(schema.prefix, namespace)
             namespaces[schema.prefix] = namespace
-        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain))
+        host_ns = Namespace('http://%s' % (Site.objects.get_current().domain,))
         for entity in entities:
             this_person = URIRef(host_ns[entity.get_absolute_url()])
             graph.add((this_person, namespaces['rdf']['type'], namespaces['foaf']['Person']))
