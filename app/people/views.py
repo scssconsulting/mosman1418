@@ -1134,25 +1134,25 @@ class UpdatePersonAddress(PermissionRequiredMixin, UpdateView):
     form_class = AddPersonAddressForm
     permission_required = 'people.change_personaddress'
 
-    def prepare_date(self, name):
-        date = getattr(self.object, name)
-        name = name[:-5]
-        if date:
-            year = date.year
-            month = date.month
-            day = date.day
-            if getattr(self.object, '{}_month'.format(name)) is False:
-                month = 0
-            if getattr(self.object, '{}_day'.format(name)) is False:
-                day = 0
-            date = '{}-{}-{}'.format(year, month, day)
-        return date
-
-    def get_initial(self):
-        initial = {}
-        initial['start_earliest_date'] = self.prepare_date('start_earliest_date')
-        initial['end_earliest_date'] = self.prepare_date('end_earliest_date')
-        return initial
+    # def prepare_date(self, name):
+    #     date = getattr(self.object, name)
+    #     name = name[:-5]
+    #     if date:
+    #         year = date.year
+    #         month = date.month
+    #         day = date.day
+    #         if getattr(self.object, '{}_month'.format(name)) is False:
+    #             month = 0
+    #         if getattr(self.object, '{}_day'.format(name)) is False:
+    #             day = 0
+    #         date = '{}-{}-{}'.format(year, month, day)
+    #     return date
+    #
+    # def get_initial(self):
+    #     initial = {}
+    #     initial['start_earliest_date'] = self.prepare_date('start_earliest_date')
+    #     initial['end_earliest_date'] = self.prepare_date('end_earliest_date')
+    #     return initial
 
     def get_success_url(self):
         if 'continue' in self.request.POST:
