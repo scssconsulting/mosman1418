@@ -503,8 +503,6 @@ class PersonAssociatedPerson(StandardMetadata, ShortDateMixin):
                                           null=True)
     association = models.ForeignKey('PersonAssociation', on_delete=models.CASCADE)
 
-    # sources = models.ManyToManyField('sources.Source', blank=True)
-
     def __str__(self):
         if self.associated_person:
             summary = '{} - {} {}'.format(self.person, self.association, self.associated_person)

@@ -290,6 +290,7 @@ class AddSourceForm(DateSelectMixin, ModelForm):
         publisher = 'Australian War Memorial'
         website_type = SourceType.objects.get(label='website')
         webpage_type = SourceType.objects.get(label='webpage')
+        awm = None
         if 'roll_of_honour' in url:
             collection, created = Source.objects.get_or_create(
                 title='Roll of Honour',
@@ -326,6 +327,9 @@ class AddSourceForm(DateSelectMixin, ModelForm):
                 defaults={'added_by': system_user}
             )
             awm = HonoursClient()
+        if awm is None:
+            self.add_error('url', 'Not a valid AWM url.')
+            return cleaned_data
         details = awm.get_details(url=url)
         cleaned_data['details'] = details
         cleaned_data['title'] = details['title']

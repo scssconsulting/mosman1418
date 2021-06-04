@@ -225,10 +225,10 @@ class AddOrganisationForm(ShortDateForm):
 
 
 class AddAssociatedPersonForm(ShortDateForm):
-    person = PersonChoice()
-    associated_person = PersonChoice(required=False)
-
-    # sources = SourcesMultiChoice(required=False)
+    person = forms.ModelChoiceField(queryset=Person.objects.only('id', 'family_name', 'other_names', 'display_name'))
+    associated_person = forms.ModelChoiceField(
+        queryset=Person.objects.only('id', 'family_name', 'other_names', 'display_name'), required=False)
+    association = forms.ModelChoiceField(queryset=PersonAssociation.objects.only('id', 'label'))
 
     class Meta:
         model = PersonAssociatedPerson
