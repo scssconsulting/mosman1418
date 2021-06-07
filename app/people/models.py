@@ -11,6 +11,7 @@ from app.generic.models import StandardMetadata, Event, Period, Person as Generi
 class Person(GenericPerson):
     family_name = models.CharField(max_length=100)
     other_names = models.CharField(max_length=100, blank=True)
+    name_suffix = models.CharField(max_length=15, blank=True, default='')
     nickname = models.CharField(max_length=100, blank=True)
     gender = models.CharField(max_length=10, blank=True, choices=(('male', 'male'), ('female', 'female')))
     last_rank = models.CharField(max_length=50, blank=True, null=True)
@@ -39,6 +40,7 @@ class Person(GenericPerson):
     merged_into = models.ForeignKey('people.Person', on_delete=models.CASCADE, blank=True, null=True)
 
     def __str__(self):
+        display = ''
         if self.family_name:
             if self.other_names:
                 display = '%s %s' % (self.other_names, self.family_name)
@@ -46,6 +48,7 @@ class Person(GenericPerson):
                 display = self.family_name
         elif self.display_name:
             display = self.display_name
+        display = ('%s %s' % (display, self.name_suffix)).strip()
         return display
 
     def alpha_name(self):

@@ -463,10 +463,10 @@ class SuggestPerson(CreateView):
 
 
 class SuggestPersonResponse(PermissionRequiredMixin, TemplateView):
-    '''
+    """
     Thank user for suggested person.
     Provide update link to add more details.
-    '''
+    """
     template_name = 'people/suggest_person_thanks.html'
     permission_required = 'people.add_person'
 

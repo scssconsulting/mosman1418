@@ -71,6 +71,9 @@
                         {% with label='Other names' field=form.other_names %}
                             {% include '_form_field.html' %}
                         {% endwith %}
+                        {% with label='Name suffix' field=form.name_suffix %}
+                            {% include '_form_field.html' %}
+                        {% endwith %}
                         {% with label='Birth date' field=form.birth_earliest_date %}
                             {% include '_form_field.html' %}
                         {% endwith %}

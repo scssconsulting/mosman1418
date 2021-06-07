@@ -291,6 +291,7 @@ class AddSourceForm(DateSelectMixin, ModelForm):
         website_type = SourceType.objects.get(label='website')
         webpage_type = SourceType.objects.get(label='webpage')
         awm = None
+        collection = None
         if 'roll_of_honour' in url:
             collection, created = Source.objects.get_or_create(
                 title='Roll of Honour',
