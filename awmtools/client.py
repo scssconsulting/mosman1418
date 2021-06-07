@@ -1,7 +1,9 @@
-from bs4 import BeautifulSoup
-from urllib.request import urlopen, Request, HTTPError
-import urllib
 import re
+import urllib
+
+from bs4 import BeautifulSoup
+from urllib.error import HTTPError
+from urllib.request import urlopen, Request
 
 try:
     from utilities import retry
@@ -129,10 +131,10 @@ Roll of Honour
 '''
 
 
-class BaseClient():
-    '''
+class BaseClient:
+    """
     Base class providing common methods, don't use this directly.
-    '''
+    """
 
     AWM_URL = 'http://www.awm.gov.au'
 
@@ -140,9 +142,9 @@ class BaseClient():
         self.soup = None
 
     # Uncomment the next line to retry in the case of a timeout error.
-    #@retry(ServerError, tries=10, delay=1)
+    # @retry(ServerError, tries=10, delay=1)
     def _get_url(self, url):
-        ''' Try to retrieve the supplied url.'''
+        """ Try to retrieve the supplied url."""
         req = Request(url)
         try:
             response = urlopen(req)
@@ -174,35 +176,34 @@ class BaseClient():
 
 
 class WWIBiogClient(BaseClient):
-    '''
-    Base class providing common methods for all the biographical
+    """Base class providing common methods for all the biographical
     databases of the Australian War Memorial. Don't use this directly.
-    '''
+    """
+    FIELDS = {}
 
     def get_title(self, soup=None, url=None):
-        ''' Get the title of this entry. '''
-        soup = self._get_soup(soup, url)
-        return soup.find('h1', 'pagetitle').string.strip()
+        """ Get the title of this entry. """
+        if soup is None:
+            soup = self._get_soup(soup, url)
+        page_title_elem = soup.find('h1', 'pagetitle')
+        return page_title_elem.string.strip() if page_title_elem else None
 
-    def get_name(self, soup=None, url=None):
-        ''' Get the name of the person described by this entry. '''
-        soup = self._get_soup(soup, url)
-        title = self.get_title(soup)
-        return title.split(' - ')[1].strip()
+    def get_name(self, title):
+        """ Get the name of the person described by this entry. """
+        return title.split(' - ')[1].strip() if title else None
 
     def _get_field_value(self, soup, field):
-        ''' Get the text value of the requested field. '''
+        """ Get the text value of the requested field. """
         try:
             value = ''
             for sibling in soup.find('strong', text=field).next_siblings:
-                print (sibling.string)
                 value += sibling.string
         except AttributeError:
             value = ''
         return value
 
     def _get_field_values(self, soup, field):
-        ''' Get a list of values from the requested field. '''
+        """ Get a list of values from the requested field. """
         try:
             value_list = soup.find('strong', text=field).parent.parent.find_all('li')
             values = [name.string.strip() for name in value_list]
@@ -211,27 +212,26 @@ class WWIBiogClient(BaseClient):
         return values
 
     def get_pdf_link(self, soup=None, url=None):
-        ''' Get a url to an attached pdf. '''
+        """ Get a url to an attached pdf. """
         soup = self._get_soup(soup, url)
         try:
             pdf_link = '{}{}'.format(
-                                self.AWM_URL,
-                                soup.find('div', 'pdf').find('a')['href']
-                                )
+                self.AWM_URL,
+                soup.find('div', 'pdf').find('a')['href']
+            )
         except AttributeError:
             pdf_link = None
         return pdf_link
 
     def _process_fieldname(self, field):
-        ''' Slugify a fieldname. '''
+        """ Slugify a fieldname. """
         return field.lower().replace(' ', '_').replace(':', '')
 
     def get_details(self, soup=None, url=None):
-        ''' Return all the extracted details from this entry. '''
+        """ Return all the extracted details from this entry. """
         soup = self._get_soup(soup, url)
-        details = {}
-        details['title'] = self.get_title(soup)
-        details['name'] = self.get_name(soup)
+        title = self.get_title(soup)
+        details = {'title': title, 'name': self.get_name(title)}
         for field in self.FIELDS['single_value']:
             fieldname = self._process_fieldname(field)
             details[fieldname] = self._get_field_value(soup, field)
@@ -243,129 +243,129 @@ class WWIBiogClient(BaseClient):
 
 
 class RollClient(WWIBiogClient):
-    '''
+    """
     Basic scraper/client for extracting structured data from a WWI entry in
     the Australian War Memorial's Roll of Honour database.
-    '''
+    """
 
     FIELDS = {
-                'single_value':
-                [
-                    'Service Number:',
-                    'Rank:',
-                    'Unit:',
-                    'Service:',
-                    'Date of death:',
-                    'Place of death:',
-                    'Cause of death:',
-                    'Cemetery or memorial details:'
-                ],
-                'multiple_value':
-                [
-                    'Also known as:'
-                ]
-            }
+        'single_value':
+            [
+                'Service Number:',
+                'Rank:',
+                'Unit:',
+                'Service:',
+                'Date of death:',
+                'Place of death:',
+                'Cause of death:',
+                'Cemetery or memorial details:'
+            ],
+        'multiple_value':
+            [
+                'Also known as:'
+            ]
+    }
 
 
 class EmbarkationClient(WWIBiogClient):
-    '''
+    """
     Basic scraper/client for extracting structured data from an entry in
     the Australian War Memorial's WWI Embarkation Roll database.
-    '''
+    """
 
     FIELDS = {
-                'single_value':
-                [
-                    'Service Number:',
-                    'Rank:',
-                    'Roll title:',
-                    'Date of embarkation:',
-                    'Place of embarkation:',
-                    'Ship embarked on:',
-                    'Ship number:'
-                ],
-                'multiple_value':
-                []
-            }
+        'single_value':
+            [
+                'Service Number:',
+                'Rank:',
+                'Roll title:',
+                'Date of embarkation:',
+                'Place of embarkation:',
+                'Ship embarked on:',
+                'Ship number:'
+            ],
+        'multiple_value':
+            []
+    }
 
 
 class RedCrossClient(WWIBiogClient):
-    '''
+    """
     Basic scraper/client for extracting structured data from an entry in
     the Australian War Memorial's WWI Red Cross Missing and Wounded database.
-    '''
+    """
 
     FIELDS = {
-                'single_value':
-                [
-                    'Service Number:',
-                    'Rank:',
-                    'Unit:',
-                ],
-                'multiple_value':
-                []
-            }
+        'single_value':
+            [
+                'Service Number:',
+                'Rank:',
+                'Unit:',
+            ],
+        'multiple_value':
+            []
+    }
 
 
 class HonoursClient(WWIBiogClient):
-    '''
+    """
     Basic scraper/client for extracting structured data from a WWI entry in
     the Australian War Memorial's Honours and Awards database.
-    '''
+    """
     FIELDS = {
-                'single_value':
-                [
-                    'Service Number:',
-                    'Rank:',
-                    'Unit:',
-                    'Service:',
-                    'Award:',
-                    'Date of London Gazette:',
-                    'Location in London Gazette:',
-                    'Date of Commonwealth of Australia Gazette:',
-                    'Location in Commonwealth of Australia Gazette:',
-                    'Recommendation:',
-                    'Date of recommendation:'
-                ],
-                'multiple_value':
-                []
-            }
+        'single_value':
+            [
+                'Service Number:',
+                'Rank:',
+                'Unit:',
+                'Service:',
+                'Award:',
+                'Date of London Gazette:',
+                'Location in London Gazette:',
+                'Date of Commonwealth of Australia Gazette:',
+                'Location in Commonwealth of Australia Gazette:',
+                'Recommendation:',
+                'Date of recommendation:'
+            ],
+        'multiple_value':
+            []
+    }
 
 
 class CollectionClient(BaseClient):
-    '''
+    """
     Basic scraper/client for extracting structured data from an entry in
     the Australian War Memorial's collection database.
-    '''
+    """
 
     FIELDS = {
-                'single_value':
-                [
-                    'ID number',
-                    'Title',
-                    'Photographer',
-                    'Object type',
-                    'Date made',
-                    'Description',
-                    'Place made',
-                    'Summary',
-                    'Object_type',
-                    'Maker',
-                    'Physical description',
-                    'Access',
-                    'Copying provision',
-                    'Measurement',
-                    'Artist',
-                    'Medium'
-                ],
-                'multiple_value':
-                [
-                    'Places made'
-                ]
-            }
+        'single_value':
+            [
+                'ID number',
+                'Title',
+                'Photographer',
+                'Object type',
+                'Date made',
+                'Description',
+                'Place made',
+                'Summary',
+                'Object_type',
+                'Maker',
+                'Physical description',
+                'Access',
+                'Copying provision',
+                'Measurement',
+                'Artist',
+                'Medium'
+            ],
+        'multiple_value':
+            [
+                'Places made'
+            ]
+    }
 
     def get_licence(self, soup=None, url=None):
-        ''' Get the licence applied to this item. '''
+        """ Get the licence applied to this item. """
         soup = self._get_soup(soup, url)
         try:
             licence = soup.find('a', rel='license').string.strip()
@@ -374,7 +374,7 @@ class CollectionClient(BaseClient):
         return licence
 
     def get_permalink(self, soup=None, url=None):
-        ''' Get the item permalink. '''
+        """ Get the item permalink. """
         soup = self._get_soup(soup, url)
         try:
             permalink = soup.find(id='collection_permalink').contents[1].string.strip()
@@ -383,19 +383,19 @@ class CollectionClient(BaseClient):
         return permalink
 
     def get_img_url(self, soup=None, url=None):
-        ''' Get the url of a collection image. '''
+        """ Get the url of a collection image. """
         soup = self._get_soup(soup, url)
         try:
             img_url = '{}{}'.format(
-                                self.AWM_URL,
-                                soup.find('span', rel='contentURL').find('img')['src']
-                                )
+                self.AWM_URL,
+                soup.find('span', rel='contentURL').find('img')['src']
+            )
         except AttributeError:
             img_url = None
         return img_url
 
     def _get_field_value(self, soup, field):
-        ''' Get the text value of the requested field. '''
+        """ Get the text value of the requested field. """
         try:
             value = soup.find('dt', text=field).find_next_sibling('dd').string.strip()
         except AttributeError:
@@ -403,7 +403,7 @@ class CollectionClient(BaseClient):
         return value
 
     def _get_field_values(self, soup, field):
-        ''' Get a list of values from the requested field. '''
+        """ Get a list of values from the requested field. """
         try:
             value_list = soup.find('dt', text=field).find_next_sibling('dd').find_all('li')
             values = [value.get_text().strip() for value in value_list]
@@ -412,7 +412,7 @@ class CollectionClient(BaseClient):
         return values
 
     def get_collection(self, soup=None, url=None):
-        ''' Get the collection of which this item is part. '''
+        """ Get the collection of which this item is part. """
         soup = self._get_soup(soup, url)
         try:
             collection = soup.find('dt', text='Collection').find_next_sibling('dd').string.strip()
@@ -421,17 +421,18 @@ class CollectionClient(BaseClient):
         return collection
 
     def _process_fieldname(self, field):
-        ''' Slugify field.'''
+        """ Slugify field."""
         return field.lower().replace(' ', '_').replace(':', '')
 
     def get_details(self, soup=None, url=None):
-        ''' Return all the extracted details for this item. '''
+        """ Return all the extracted details for this item. """
         soup = self._get_soup(soup, url)
-        details = {}
-        details['licence'] = self.get_licence(soup)
-        details['img_url'] = self.get_img_url(soup)
-        details['collection'] = self.get_collection(soup)
-        details['permalink'] = self.get_permalink(soup)
+        details = {
+            'licence': self.get_licence(soup),
+            'img_url': self.get_img_url(soup),
+            'collection': self.get_collection(soup),
+            'permalink': self.get_permalink(soup)
+        }
         for field in self.FIELDS['single_value']:
             fieldname = self._process_fieldname(field)
             details[fieldname] = self._get_field_value(soup, field)
@@ -442,22 +443,21 @@ class CollectionClient(BaseClient):
 
 
 class AWMBioSearchClient(BaseClient):
-
     FIELDS = ['name', 'service_number', 'unit', 'conflict', 'award']
 
     def search(self, db, **kwargs):
         params = urllib.urlencode(kwargs)
         url = '{}/research/people/{}/?{}&op=Search'.format(self.AWM_URL, db, params)
-        print (url)
+        print(url)
         response = self._get_url(url)
         soup = BeautifulSoup(response.read())
-        #print soup
+        # print soup
         total_results = self._get_total_results(soup)
         results = self._process_page(soup)
         return {
-                'total_results': total_results,
-                'results': results
-            }
+            'total_results': total_results,
+            'results': results
+        }
 
     def _process_page(self, soup):
         results = []
