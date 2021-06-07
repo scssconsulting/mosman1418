@@ -55,17 +55,20 @@ class Address(StandardMetadata):
 
     def __str__(self):
         if self.mosman_street and self.mosman_street.street_name:
-            street = self.mosman_street.street_name.strip()
+            street = self.mosman_street.street_name
         elif self.street_name:
             street = self.street_name
         else:
-            street = None
-        return '{building}{number}{street}, {place}'.format(
-            building='{}, '.format(self.building_name) if self.building_name else '',
+            street = ''
+        building_street = '{building}{number}{street}'.format(
+            building='{}, '.format(self.building_name).strip(',') if self.building_name else '',
             number='{} '.format(self.street_number) if self.street_number else '',
-            street='{}'.format(street if street else ''),
-            place=self.place
-        )
+            street='{}'.format(street if street else '')
+        ).strip().strip(',')
+        return '{}, {}'.format(
+            building_street,
+            self.place or ''
+        ).strip(',')
 
     class Meta:
         ordering = ['street_name', 'mosman_street__street_name', 'street_number']
