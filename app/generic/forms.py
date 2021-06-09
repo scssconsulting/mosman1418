@@ -11,93 +11,93 @@ class NewSelectDateWidget(SelectDateWidget):
     none_value = (0, 'unknown')
 
 
-class AddPersonForm(ModelForm):
-    years = [year for year in range(1850, 1950)]
-
-    birth_earliest_date = forms.CharField(widget=NewSelectDateWidget(attrs={'class': 'input-small'}, years=years),
-                                          required=False)
-    birth_latest_date = forms.CharField(widget=NewSelectDateWidget(attrs={'class': 'input-small'}, years=years),
-                                        required=False)
-    birth_earliest_month_known = forms.BooleanField(widget=forms.HiddenInput, required=False)
-    birth_earliest_day_known = forms.BooleanField(widget=forms.HiddenInput, required=False)
-    birth_latest_month_known = forms.BooleanField(widget=forms.HiddenInput, required=False)
-    birth_latest_day_known = forms.BooleanField(widget=forms.HiddenInput, required=False)
-    death_earliest_date = forms.CharField(widget=NewSelectDateWidget(attrs={'class': 'input-small'}, years=years),
-                                          required=False)
-    death_latest_date = forms.CharField(widget=NewSelectDateWidget(attrs={'class': 'input-small'}, years=years),
-                                        required=False)
-    death_earliest_month_known = forms.BooleanField(widget=forms.HiddenInput, required=False)
-    death_earliest_day_known = forms.BooleanField(widget=forms.HiddenInput, required=False)
-    death_latest_month_known = forms.BooleanField(widget=forms.HiddenInput, required=False)
-    death_latest_day_known = forms.BooleanField(widget=forms.HiddenInput, required=False)
-
-    def clean_birth_earliest_date(self):
-        return self.clean_date(self.cleaned_data['birth_earliest_date'], 'start')
-
-    def clean_death_earliest_date(self):
-        return self.clean_date(self.cleaned_data['death_earliest_date'], 'start')
-
-    def clean_birth_latest_date(self):
-        return self.clean_date(self.cleaned_data['birth_latest_date'], 'end')
-
-    def clean_death_latest_date(self):
-        return self.clean_date(self.cleaned_data['death_latest_date'], 'end')
-
-    def clean_birth_earliest_month_known(self):
-        return self.clean_month(self.cleaned_data['birth_earliest_date'], 'start')
-
-    def clean_death_earliest_month_known(self):
-        return self.clean_month(self.cleaned_data['death_earliest_date'], 'start')
-
-    def clean_birth_earliest_day_known(self):
-        return self.clean_day(self.cleaned_data['birth_earliest_date'], 'start')
-
-    def clean_death_earliest_day_known(self):
-        return self.clean_day(self.cleaned_data['death_earliest_date'], 'start')
-
-    def clean_birth_latest_month_known(self):
-        return self.clean_month(self.cleaned_data['birth_latest_date'], 'end')
-
-    def clean_death_latest_month_known(self):
-        return self.clean_month(self.cleaned_data['death_latest_date'], 'end')
-
-    def clean_birth_latest_day_known(self):
-        return self.clean_day(self.cleaned_data['birth_latest_date'], 'end')
-
-    def clean_death_latest_day_known(self):
-        return self.clean_day(self.cleaned_data['death_latest_date'], 'end')
-
-    def clean_date(self, date, type):
-        year, month, day = date.split('-')
-        if int(month) == 0:
-            if type == 'start':
-                month = '0'
-                day = '1'
-            elif type == 'end':
-                month = '12'
-                day = '31'
-        else:
-            if int(day) == 0:
-                if type == 'start':
-                    day = '1'
-                elif type == 'end':
-                    day = monthrange(int(year), int(month))[1]
-        return '%s-%s-%s' % (year, month, day)
-
-    def clean_month(self, date, type):
-        year, month, day = date.split('-')
-        return False if int(month) == 0 else True
-
-    def clean_day(self, date, type):
-        year, month, day = date.split('-')
-        return False if int(day) == 0 else True
-
+# class AddPersonForm(ModelForm):
+#     years = [year for year in range(1850, 1950)]
+#
+#     birth_earliest_date = forms.CharField(widget=NewSelectDateWidget(attrs={'class': 'input-small'}, years=years),
+#                                           required=False)
+#     birth_latest_date = forms.CharField(widget=NewSelectDateWidget(attrs={'class': 'input-small'}, years=years),
+#                                         required=False)
+#     birth_earliest_month_known = forms.BooleanField(widget=forms.HiddenInput, required=False)
+#     birth_earliest_day_known = forms.BooleanField(widget=forms.HiddenInput, required=False)
+#     birth_latest_month_known = forms.BooleanField(widget=forms.HiddenInput, required=False)
+#     birth_latest_day_known = forms.BooleanField(widget=forms.HiddenInput, required=False)
+#     death_earliest_date = forms.CharField(widget=NewSelectDateWidget(attrs={'class': 'input-small'}, years=years),
+#                                           required=False)
+#     death_latest_date = forms.CharField(widget=NewSelectDateWidget(attrs={'class': 'input-small'}, years=years),
+#                                         required=False)
+#     death_earliest_month_known = forms.BooleanField(widget=forms.HiddenInput, required=False)
+#     death_earliest_day_known = forms.BooleanField(widget=forms.HiddenInput, required=False)
+#     death_latest_month_known = forms.BooleanField(widget=forms.HiddenInput, required=False)
+#     death_latest_day_known = forms.BooleanField(widget=forms.HiddenInput, required=False)
+#
+#     def clean_birth_earliest_date(self):
+#         return self.clean_date(self.cleaned_data['birth_earliest_date'], 'start')
+#
+#     def clean_death_earliest_date(self):
+#         return self.clean_date(self.cleaned_data['death_earliest_date'], 'start')
+#
+#     def clean_birth_latest_date(self):
+#         return self.clean_date(self.cleaned_data['birth_latest_date'], 'end')
+#
+#     def clean_death_latest_date(self):
+#         return self.clean_date(self.cleaned_data['death_latest_date'], 'end')
+#
+#     def clean_birth_earliest_month_known(self):
+#         return self.clean_month(self.cleaned_data['birth_earliest_date'], 'start')
+#
+#     def clean_death_earliest_month_known(self):
+#         return self.clean_month(self.cleaned_data['death_earliest_date'], 'start')
+#
+#     def clean_birth_earliest_day_known(self):
+#         return self.clean_day(self.cleaned_data['birth_earliest_date'], 'start')
+#
+#     def clean_death_earliest_day_known(self):
+#         return self.clean_day(self.cleaned_data['death_earliest_date'], 'start')
+#
+#     def clean_birth_latest_month_known(self):
+#         return self.clean_month(self.cleaned_data['birth_latest_date'], 'end')
+#
+#     def clean_death_latest_month_known(self):
+#         return self.clean_month(self.cleaned_data['death_latest_date'], 'end')
+#
+#     def clean_birth_latest_day_known(self):
+#         return self.clean_day(self.cleaned_data['birth_latest_date'], 'end')
+#
+#     def clean_death_latest_day_known(self):
+#         return self.clean_day(self.cleaned_data['death_latest_date'], 'end')
+#
+#     def clean_date(self, date, type):
+#         year, month, day = date.split('-')
+#         if int(month) == 0:
+#             if type == 'start':
+#                 month = '0'
+#                 day = '1'
+#             elif type == 'end':
+#                 month = '12'
+#                 day = '31'
+#         else:
+#             if int(day) == 0:
+#                 if type == 'start':
+#                     day = '1'
+#                 elif type == 'end':
+#                     day = monthrange(int(year), int(month))[1]
+#         return '%s-%s-%s' % (year, month, day)
+#
+#     def clean_month(self, date, type):
+#         year, month, day = date.split('-')
+#         return False if int(month) == 0 else True
+#
+#     def clean_day(self, date, type):
+#         year, month, day = date.split('-')
+#         return False if int(day) == 0 else True
+#
 
 class DateSelectMixin:
     def clean_date(self, date, type):
         if date:
-            year, month, day = date.split('-')
-            if int(month) == 0:
+            year, month, day = (int(i) for i in date.split('-'))
+            if month == 0:
                 if type == 'start':
                     month = '1'
                     day = '1'
@@ -105,12 +105,12 @@ class DateSelectMixin:
                     month = '12'
                     day = '31'
             else:
-                if int(day) == 0:
+                if day == 0:
                     if type == 'start':
                         day = '1'
                     elif type == 'end':
-                        day = monthrange(int(year), int(month))[1]
-            if int(year) == 0:
+                        day = monthrange(year, month)[1]
+            if year == 0:
                 date = None
             else:
                 date = '%s-%s-%s' % (year, month, day)
@@ -120,18 +120,18 @@ class DateSelectMixin:
 
     def clean_month(self, date, type):
         if date:
-            year, month, day = date.split('-')
-            status = False if int(month) == 0 else True
+            year, month, _ = (int(i) for i in date.split('-'))
+            status = year != 0 and month != 0
         else:
-            status = True
+            status = False
         return status
 
     def clean_day(self, date, type):
         if date:
-            year, month, day = date.split('-')
-            status = False if int(day) == 0 else True
+            year, _, day = (int(i) for i in date.split('-'))
+            status = year != 0 and day != 0
         else:
-            status = True
+            status = False
         return status
 
 

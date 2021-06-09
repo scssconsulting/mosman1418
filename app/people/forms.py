@@ -102,20 +102,36 @@ class AddPersonForm(DateSelectMixin, ModelForm):
 
     def clean(self):
         cleaned_data = super(AddPersonForm, self).clean()
+        birth_earliest_date = cleaned_data['birth_earliest_date']
+        birth_latest_date = cleaned_data['birth_latest_date']
+        cleaned_data['birth_earliest_month_known'] = self.clean_month(birth_earliest_date, 'start')
+        cleaned_data['birth_earliest_day_known'] = self.clean_day(birth_earliest_date, 'start')
+        cleaned_data['birth_latest_month_known'] = self.clean_month(birth_latest_date, 'end')
+        cleaned_data['birth_latest_day_known'] = self.clean_day(birth_latest_date, 'end')
+        cleaned_data['birth_earliest_date'] = self.clean_date(birth_earliest_date, 'start')
+        cleaned_data['birth_latest_date'] = self.clean_date(birth_latest_date, 'end')
+        death_earliest_date = cleaned_data['death_earliest_date']
+        death_latest_date = cleaned_data['death_latest_date']
+        cleaned_data['death_earliest_month_known'] = self.clean_month(death_earliest_date, 'start')
+        cleaned_data['death_earliest_day_known'] = self.clean_day(death_earliest_date, 'start')
+        cleaned_data['death_latest_month_known'] = self.clean_month(death_latest_date, 'end')
+        cleaned_data['death_latest_day_known'] = self.clean_day(death_latest_date, 'end')
+        cleaned_data['death_earliest_date'] = self.clean_date(death_earliest_date, 'start')
+        cleaned_data['death_latest_date'] = self.clean_date(death_latest_date, 'end')
         return cleaned_data
 
     class Meta:
         model = Person
         exclude = ('added_by', 'status')
         widgets = {
-            'birth_earliest_month_known': forms.HiddenInput,
-            'birth_earliest_day_known': forms.HiddenInput,
-            'birth_latest_month_known': forms.HiddenInput,
-            'birth_latest_day_known': forms.HiddenInput,
-            'death_earliest_month_known': forms.HiddenInput,
-            'death_earliest_day_known': forms.HiddenInput,
-            'death_latest_month_known': forms.HiddenInput,
-            'death_latest_day_known': forms.HiddenInput,
+            # 'birth_earliest_month_known': forms.HiddenInput,
+            # 'birth_earliest_day_known': forms.HiddenInput,
+            # 'birth_latest_month_known': forms.HiddenInput,
+            # 'birth_latest_day_known': forms.HiddenInput,
+            # 'death_earliest_month_known': forms.HiddenInput,
+            # 'death_earliest_day_known': forms.HiddenInput,
+            # 'death_latest_month_known': forms.HiddenInput,
+            # 'death_latest_day_known': forms.HiddenInput,
             'biography': CKEditorWidget(attrs={'class': 'input-xlarge'}),
             'notes': CKEditorWidget(attrs={'class': 'input-xlarge'}),
             'mosman_connection': forms.Textarea(attrs={
