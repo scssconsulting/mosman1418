@@ -691,11 +691,12 @@ class UpdateLifeEvent(PermissionRequiredMixin, UpdateView):
         return date
 
     def get_initial(self):
-        initial = {}
-        initial['start_earliest_date'] = self.prepare_date('start_earliest_date')
-        initial['start_latest_date'] = self.prepare_date('start_latest_date')
-        initial['end_earliest_date'] = self.prepare_date('end_earliest_date')
-        initial['end_latest_date'] = self.prepare_date('end_latest_date')
+        initial = {
+            'start_earliest_date': self.prepare_date('start_earliest_date'),
+            'start_latest_date': self.prepare_date('start_latest_date'),
+            'end_earliest_date': self.prepare_date('end_earliest_date'),
+            'end_latest_date': self.prepare_date('end_latest_date')
+        }
         return initial
 
 

@@ -174,14 +174,14 @@ class AddLifeEventForm(AddEventForm):
         model = LifeEvent
         exclude = ('added_by',)
         widgets = {
-            'start_earliest_month': forms.HiddenInput,
-            'start_earliest_day': forms.HiddenInput,
-            'start_latest_month': forms.HiddenInput,
-            'start_latest_day': forms.HiddenInput,
-            'end_earliest_month': forms.HiddenInput,
-            'end_earliest_day': forms.HiddenInput,
-            'end_latest_month': forms.HiddenInput,
-            'end_latest_day': forms.HiddenInput,
+            # 'start_earliest_month': forms.HiddenInput,
+            # 'start_earliest_day': forms.HiddenInput,
+            # 'start_latest_month': forms.HiddenInput,
+            # 'start_latest_day': forms.HiddenInput,
+            # 'end_earliest_month': forms.HiddenInput,
+            # 'end_earliest_day': forms.HiddenInput,
+            # 'end_latest_month': forms.HiddenInput,
+            # 'end_latest_day': forms.HiddenInput,
             'description': forms.Textarea(attrs={
                 'class': 'input-large',
                 'rows': '4'})
