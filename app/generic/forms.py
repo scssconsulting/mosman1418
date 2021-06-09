@@ -94,46 +94,66 @@ class AddPersonForm(ModelForm):
 
 
 class DateSelectMixin:
-
-    def clean(self):
-        cleaned_data = super().clean()
-        all_date_fields = [f for f in self.fields if isinstance(self.fields[f].widget, NewSelectDateWidget)]
-        for date_field in all_date_fields:
-            if not cleaned_data[date_field]:
-                cleaned_data[date_field] = None
-                continue
-            date_data = cleaned_data[date_field].split('-')
-            if len(date_data) != 3:
-                self.add_error(date_field, "Invalid date.")
-                continue
-            try:
-                year, month, day = (int(i) for i in date_data)
-            except ValueError:
-                self.add_error(date_field, "Invalid date.")
-                continue
-            if year == month == day == 0:
-                cleaned_data[date_field] = None
-                continue
-            elif 0 in {year, month, day}:
-                self.add_error(date_field, "Invalid date.")
+    def clean_date(self, date, type):
+        if date:
+            year, month, day = date.split('-')
+            if int(month) == 0:
+                if type == 'start':
+                    month = '1'
+                    day = '1'
+                elif type == 'end':
+                    month = '12'
+                    day = '31'
             else:
-                cleaned_data[date_field] = '%s-%s-%s' % (year, month, day)
-        return cleaned_data
+                if int(day) == 0:
+                    if type == 'start':
+                        day = '1'
+                    elif type == 'end':
+                        day = monthrange(int(year), int(month))[1]
+            if int(year) == 0:
+                date = None
+            else:
+                date = '%s-%s-%s' % (year, month, day)
+        else:
+            date = None
+        return date
+
+    def clean_month(self, date, type):
+        if date:
+            year, month, day = date.split('-')
+            status = False if int(month) == 0 else True
+        else:
+            status = True
+        return status
+
+    def clean_day(self, date, type):
+        if date:
+            year, month, day = date.split('-')
+            status = False if int(day) == 0 else True
+        else:
+            status = True
+        return status
 
 
 class ShortDateForm(DateSelectMixin, ModelForm):
-    start_earliest_date = forms.CharField(
-        widget=NewSelectDateWidget(
-            attrs={'class': 'input-small'},
-            years=YEARS
-        ), required=False
-    )
-    end_earliest_date = forms.CharField(
-        widget=NewSelectDateWidget(
-            attrs={'class': 'input-small'},
-            years=YEARS
-        ), required=False
-    )
+    start_earliest_date = forms.CharField(widget=NewSelectDateWidget(
+        attrs={'class': 'input-small'},
+        years=YEARS), required=False)
+    end_earliest_date = forms.CharField(widget=NewSelectDateWidget(
+        attrs={'class': 'input-small'},
+        years=YEARS), required=False)
+
+    def clean(self):
+        cleaned_data = super(ShortDateForm, self).clean()
+        start_earliest_date = cleaned_data['start_earliest_date']
+        cleaned_data['start_earliest_month'] = self.clean_month(start_earliest_date, 'start')
+        cleaned_data['start_earliest_day'] = self.clean_day(start_earliest_date, 'start')
+        cleaned_data['start_earliest_date'] = self.clean_date(start_earliest_date, 'start')
+        end_earliest_date = cleaned_data['end_earliest_date']
+        cleaned_data['end_earliest_month'] = self.clean_month(end_earliest_date, 'start')
+        cleaned_data['end_earliest_day'] = self.clean_day(end_earliest_date, 'start')
+        cleaned_data['end_earliest_date'] = self.clean_date(end_earliest_date, 'start')
+        return cleaned_data
 
 
 class AddEventForm(DateSelectMixin, ModelForm):
@@ -159,3 +179,23 @@ class AddEventForm(DateSelectMixin, ModelForm):
             attrs={'class': 'input-small'},
             years=years
         ), required=False)
+
+    def clean(self):
+        cleaned_data = super(AddEventForm, self).clean()
+        start_earliest_date = cleaned_data['start_earliest_date']
+        start_latest_date = cleaned_data['start_latest_date']
+        cleaned_data['start_earliest_month'] = self.clean_month(start_earliest_date, 'start')
+        cleaned_data['start_earliest_day'] = self.clean_day(start_earliest_date, 'start')
+        cleaned_data['start_latest_month'] = self.clean_month(start_latest_date, 'end')
+        cleaned_data['start_latest_day'] = self.clean_day(start_latest_date, 'end')
+        cleaned_data['start_earliest_date'] = self.clean_date(start_earliest_date, 'start')
+        cleaned_data['start_latest_date'] = self.clean_date(start_latest_date, 'end')
+        end_earliest_date = cleaned_data['end_earliest_date']
+        end_latest_date = cleaned_data['end_latest_date']
+        cleaned_data['end_earliest_month'] = self.clean_month(end_earliest_date, 'start')
+        cleaned_data['end_earliest_day'] = self.clean_day(end_earliest_date, 'start')
+        cleaned_data['end_latest_month'] = self.clean_month(end_latest_date, 'end')
+        cleaned_data['end_latest_day'] = self.clean_day(end_latest_date, 'end')
+        cleaned_data['end_earliest_date'] = self.clean_date(end_earliest_date, 'start')
+        cleaned_data['end_latest_date'] = self.clean_date(end_latest_date, 'end')
+        return cleaned_data

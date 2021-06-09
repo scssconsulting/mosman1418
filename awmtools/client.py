@@ -448,7 +448,6 @@ class AWMBioSearchClient(BaseClient):
     def search(self, db, **kwargs):
         params = urllib.urlencode(kwargs)
         url = '{}/research/people/{}/?{}&op=Search'.format(self.AWM_URL, db, params)
-        print(url)
         response = self._get_url(url)
         soup = BeautifulSoup(response.read())
         # print soup

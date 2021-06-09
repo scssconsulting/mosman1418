@@ -554,7 +554,7 @@ class UpdatePerson(UpdateView):
                 month = 0
             if getattr(self.object, '{}_day_known'.format(name)) is False:
                 day = 0
-            # date = '{}-{}-{}'.format(year, month, day)
+            date = '{}-{}-{}'.format(year, month, day)
         return date
 
     def get_initial(self):
@@ -801,6 +801,27 @@ class UpdateBirth(PermissionRequiredMixin, UpdateView):
             url = reverse_lazy('person-update', args=[self.object.person.id])
         return url
 
+    def prepare_date(self, name):
+        date = getattr(self.object, name)
+        name = name[:-5]
+        if date:
+            year = date.year
+            month = date.month
+            day = date.day
+            if getattr(self.object, '{}_month'.format(name)) is False:
+                month = 0
+            if getattr(self.object, '{}_day'.format(name)) is False:
+                day = 0
+            date = '{}-{}-{}'.format(year, month, day)
+        return date
+
+    def get_initial(self):
+        initial = {
+            'start_earliest_date': self.prepare_date('start_earliest_date'),
+            'start_latest_date': self.prepare_date('start_latest_date')
+        }
+        return initial
+
 
 class DeleteBirth(PermissionRequiredMixin, DeleteView):
     model = Birth
@@ -813,6 +834,27 @@ class DeleteBirth(PermissionRequiredMixin, DeleteView):
 
     def get_success_url(self):
         return reverse_lazy('person-update', args=[self.person_pk])
+
+    def prepare_date(self, name):
+        date = getattr(self.object, name)
+        name = name[:-5]
+        if date:
+            year = date.year
+            month = date.month
+            day = date.day
+            if getattr(self.object, '{}_month'.format(name)) is False:
+                month = 0
+            if getattr(self.object, '{}_day'.format(name)) is False:
+                day = 0
+            date = '{}-{}-{}'.format(year, month, day)
+        return date
+
+    def get_initial(self):
+        initial = {
+            'start_earliest_date': self.prepare_date('start_earliest_date'),
+            'start_latest_date': self.prepare_date('start_latest_date')
+        }
+        return initial
 
 
 class AddDeath(CreateView):
@@ -851,6 +893,27 @@ class UpdateDeath(PermissionRequiredMixin, UpdateView):
             url = reverse_lazy('person-view', args=[self.object.person.id])
         return url
 
+    def prepare_date(self, name):
+        date = getattr(self.object, name)
+        name = name[:-5]
+        if date:
+            year = date.year
+            month = date.month
+            day = date.day
+            if getattr(self.object, '{}_month'.format(name)) is False:
+                month = 0
+            if getattr(self.object, '{}_day'.format(name)) is False:
+                day = 0
+            date = '{}-{}-{}'.format(year, month, day)
+        return date
+
+    def get_initial(self):
+        initial = {
+            'start_earliest_date': self.prepare_date('start_earliest_date'),
+            'start_latest_date': self.prepare_date('start_latest_date')
+        }
+        return initial
+
 
 class DeleteDeath(PermissionRequiredMixin, DeleteView):
     model = Death
@@ -863,6 +926,27 @@ class DeleteDeath(PermissionRequiredMixin, DeleteView):
 
     def get_success_url(self):
         return reverse_lazy('person-update', args=[self.person_pk])
+
+    def prepare_date(self, name):
+        date = getattr(self.object, name)
+        name = name[:-5]
+        if date:
+            year = date.year
+            month = date.month
+            day = date.day
+            if getattr(self.object, '{}_month'.format(name)) is False:
+                month = 0
+            if getattr(self.object, '{}_day'.format(name)) is False:
+                day = 0
+            date = '{}-{}-{}'.format(year, month, day)
+        return date
+
+    def get_initial(self):
+        initial = {
+            'start_earliest_date': self.prepare_date('start_earliest_date'),
+            'end_earliest_date': self.prepare_date('end_earliest_date')
+        }
+        return initial
 
 
 class AddOrganisation(CreateView):
@@ -1134,25 +1218,26 @@ class UpdatePersonAddress(PermissionRequiredMixin, UpdateView):
     form_class = AddPersonAddressForm
     permission_required = 'people.change_personaddress'
 
-    # def prepare_date(self, name):
-    #     date = getattr(self.object, name)
-    #     name = name[:-5]
-    #     if date:
-    #         year = date.year
-    #         month = date.month
-    #         day = date.day
-    #         if getattr(self.object, '{}_month'.format(name)) is False:
-    #             month = 0
-    #         if getattr(self.object, '{}_day'.format(name)) is False:
-    #             day = 0
-    #         date = '{}-{}-{}'.format(year, month, day)
-    #     return date
-    #
-    # def get_initial(self):
-    #     initial = {}
-    #     initial['start_earliest_date'] = self.prepare_date('start_earliest_date')
-    #     initial['end_earliest_date'] = self.prepare_date('end_earliest_date')
-    #     return initial
+    def prepare_date(self, name):
+        date = getattr(self.object, name)
+        name = name[:-5]
+        if date:
+            year = date.year
+            month = date.month
+            day = date.day
+            if getattr(self.object, '{}_month'.format(name)) is False:
+                month = 0
+            if getattr(self.object, '{}_day'.format(name)) is False:
+                day = 0
+            date = '{}-{}-{}'.format(year, month, day)
+        return date
+
+    def get_initial(self):
+        initial = {
+            'start_earliest_date': self.prepare_date('start_earliest_date'),
+            'end_earliest_date': self.prepare_date('end_earliest_date')
+        }
+        return initial
 
     def get_success_url(self):
         if 'continue' in self.request.POST:

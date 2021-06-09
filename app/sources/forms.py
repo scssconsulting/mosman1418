@@ -165,6 +165,14 @@ class AddSourceForm(DateSelectMixin, ModelForm):
 
     def clean(self):
         cleaned_data = super(AddSourceForm, self).clean()
+        publication_date = cleaned_data['publication_date']
+        publication_date_end = cleaned_data['publication_date_end']
+        cleaned_data['publication_date_month_known'] = self.clean_month(publication_date, 'start')
+        cleaned_data['publication_date_day_known'] = self.clean_day(publication_date, 'start')
+        cleaned_data['publication_date_end_month_known'] = self.clean_month(publication_date_end, 'end')
+        cleaned_data['publication_date_end_day_known'] = self.clean_day(publication_date_end, 'end')
+        cleaned_data['publication_date'] = self.clean_date(publication_date, 'start')
+        cleaned_data['publication_date_end'] = self.clean_date(publication_date_end, 'end')
         if 'category' in cleaned_data:
             category = cleaned_data['category']
             if category == 'trove' or category == 'naa' or category == 'awm' or category == 'cwgc':
@@ -397,6 +405,18 @@ class UpdateSourceForm(DateSelectMixin, ModelForm):
             'url': forms.TextInput(attrs={'class': 'input-xlarge'}),
             'caption': CKEditorWidget(attrs={'class': 'input-xlarge'}),
         }
+
+    def clean(self):
+        cleaned_data = super(UpdateSourceForm, self).clean()
+        publication_date = cleaned_data['publication_date']
+        publication_date_end = cleaned_data['publication_date_end']
+        cleaned_data['publication_date_month_known'] = self.clean_month(publication_date, 'start')
+        cleaned_data['publication_date_day_known'] = self.clean_day(publication_date, 'start')
+        cleaned_data['publication_date_end_month_known'] = self.clean_month(publication_date_end, 'end')
+        cleaned_data['publication_date_end_day_known'] = self.clean_day(publication_date_end, 'end')
+        cleaned_data['publication_date'] = self.clean_date(publication_date, 'start')
+        cleaned_data['publication_date_end'] = self.clean_date(publication_date_end, 'end')
+        return cleaned_data
 
 
 class AddSourcePersonForm(ModelForm):

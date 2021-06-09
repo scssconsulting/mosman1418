@@ -29,10 +29,8 @@ class ShortDateMixin(models.Model):
         date_obj = getattr(self, '{}_date'.format(date_name))
         if date_obj is None:
             return None
-        # month = getattr(self, '{}_month'.format(date_name))
-        # day = getattr(self, '{}_day'.format(date_name))
-        month = date_obj.month
-        day = date_obj.day
+        month = getattr(self, '{}_month'.format(date_name))
+        day = getattr(self, '{}_day'.format(date_name))
         if date_obj and month and day:
             date_str = '{} {} {}'.format(date_obj.day, months[date_obj.month], date_obj.year)
         elif date_obj and month:

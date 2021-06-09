@@ -24,6 +24,26 @@ class PeopleMultiChoice(ModelSelect2MultipleWidget):
     queryset = Person.objects
     search_fields = ['family_name__istartswith', ]
 
+    def clean(self):
+        cleaned_data = super(AddPersonForm, self).clean()
+        birth_earliest_date = cleaned_data['birth_earliest_date']
+        birth_latest_date = cleaned_data['birth_latest_date']
+        cleaned_data['birth_earliest_month_known'] = self.clean_month(birth_earliest_date, 'start')
+        cleaned_data['birth_earliest_day_known'] = self.clean_day(birth_earliest_date, 'start')
+        cleaned_data['birth_latest_month_known'] = self.clean_month(birth_latest_date, 'end')
+        cleaned_data['birth_latest_day_known'] = self.clean_day(birth_latest_date, 'end')
+        cleaned_data['birth_earliest_date'] = self.clean_date(birth_earliest_date, 'start')
+        cleaned_data['birth_latest_date'] = self.clean_date(birth_latest_date, 'end')
+        death_earliest_date = cleaned_data['death_earliest_date']
+        death_latest_date = cleaned_data['death_latest_date']
+        cleaned_data['death_earliest_month_known'] = self.clean_month(death_earliest_date, 'start')
+        cleaned_data['death_earliest_day_known'] = self.clean_day(death_earliest_date, 'start')
+        cleaned_data['death_latest_month_known'] = self.clean_month(death_latest_date, 'end')
+        cleaned_data['death_latest_day_known'] = self.clean_day(death_latest_date, 'end')
+        cleaned_data['death_earliest_date'] = self.clean_date(death_earliest_date, 'start')
+        cleaned_data['death_latest_date'] = self.clean_date(death_latest_date, 'end')
+        return cleaned_data
+
 
 class PersonChoice(ModelSelect2Widget):
     queryset = Person.objects
@@ -249,6 +269,18 @@ class AddAssociatedOrganisationForm(DateSelectMixin, ModelForm):
         years=YEARS), required=False)
     organisation = OrganisationChoice()
     sources = SourcesMultiChoice(required=False)
+
+    def clean(self):
+        cleaned_data = super(AddAssociatedOrganisationForm, self).clean()
+        start_earliest_date = cleaned_data['start_earliest_date']
+        cleaned_data['start_earliest_month'] = self.clean_month(start_earliest_date, 'start')
+        cleaned_data['start_earliest_day'] = self.clean_day(start_earliest_date, 'start')
+        cleaned_data['start_earliest_date'] = self.clean_date(start_earliest_date, 'start')
+        end_earliest_date = cleaned_data['end_earliest_date']
+        cleaned_data['end_earliest_month'] = self.clean_month(end_earliest_date, 'start')
+        cleaned_data['end_earliest_day'] = self.clean_day(end_earliest_date, 'start')
+        cleaned_data['end_earliest_date'] = self.clean_date(end_earliest_date, 'start')
+        return cleaned_data
 
     class Meta:
         model = PersonAssociatedOrganisation
