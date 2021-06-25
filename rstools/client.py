@@ -2,7 +2,8 @@ import re
 from urllib.parse import quote_plus
 from bs4 import BeautifulSoup
 import mechanize
-#import logging
+
+# import logging
 
 try:
     import utilities
@@ -11,101 +12,101 @@ except ImportError:
     import rstools.utilities
     from rstools.utilities import retry
 
-#logger = logging.getLogger("mechanize")
-#logger.addHandler(logging.StreamHandler(sys.stdout))
-#logger.setLevel(logging.DEBUG)
+# logger = logging.getLogger("mechanize")
+# logger.addHandler(logging.StreamHandler(sys.stdout))
+# logger.setLevel(logging.DEBUG)
 
 
 RS_URLS = {
-        'item': 'http://www.naa.gov.au/cgi-bin/Search?O=I&Number=',
-        'series': 'http://www.naa.gov.au/cgi-bin/Search?Number=',
-        'agency': 'http://www.naa.gov.au/cgi-bin/Search?Number=',
-        'search_results': 'http://recordsearch.naa.gov.au/SearchNRetrieve/Interface/ListingReports/ItemsListing.aspx',
-        'ns_results': 'http://recordsearch.naa.gov.au/NameSearch/Interface/ItemsListing.aspx'
-    }
+    'item': 'http://www.naa.gov.au/cgi-bin/Search?O=I&Number=',
+    'series': 'http://www.naa.gov.au/cgi-bin/Search?Number=',
+    'agency': 'http://www.naa.gov.au/cgi-bin/Search?Number=',
+    'search_results': 'http://recordsearch.naa.gov.au/SearchNRetrieve/Interface/ListingReports/ItemsListing.aspx',
+    'ns_results': 'http://recordsearch.naa.gov.au/NameSearch/Interface/ItemsListing.aspx'
+}
 
 ITEM_FORM = {
     'kw': {
-            'id': 'ctl00$ContentPlaceHolderSNRMain$txbKeywords',
-            'type': 'input',
-            },
+        'id': 'ctl00$ContentPlaceHolderSNRMain$txbKeywords',
+        'type': 'input',
+    },
     'kw_options': {
-            'id': 'ctl00$ContentPlaceHolderSNRMain$ddlUsingKeywords',
-            'type': 'select'
-            },
+        'id': 'ctl00$ContentPlaceHolderSNRMain$ddlUsingKeywords',
+        'type': 'select'
+    },
     'kw_exclude': {
-            'id': 'ctl00$ContentPlaceHolderSNRMain$txbExKeywords',
-            'type': 'input'
-            },
+        'id': 'ctl00$ContentPlaceHolderSNRMain$txbExKeywords',
+        'type': 'input'
+    },
     'kw_exclude_options': {
-            'id': 'ctl00$ContentPlaceHolderSNRMain$ddlUsingExKwd',
-            'type': 'select'
-            },
+        'id': 'ctl00$ContentPlaceHolderSNRMain$ddlUsingExKwd',
+        'type': 'select'
+    },
     # Set to 'on' to search in item notes
     # It's a checkbox, but uses Javascript to set text value.
     # Pretend it's a select for validation purposes.
     'search_notes': {
-            'id': 'ctl00$ContentPlaceHolderSNRMain$cbxKwdTitleNotes',
-            'type': 'select'
-            },
+        'id': 'ctl00$ContentPlaceHolderSNRMain$cbxKwdTitleNotes',
+        'type': 'select'
+    },
     'series': {
-            'id': 'ctl00$ContentPlaceHolderSNR$txbSerNo',
-            'type': 'input'
-            },
+        'id': 'ctl00$ContentPlaceHolderSNR$txbSerNo',
+        'type': 'input'
+    },
     'series_exclude': {
-            'id': 'ctl00$ContentPlaceHolderSNRMain$txbExSerNo',
-            'type': 'input'
-            },
+        'id': 'ctl00$ContentPlaceHolderSNRMain$txbExSerNo',
+        'type': 'input'
+    },
     'control': {
-            'id': 'ctl00$ContentPlaceHolderSNRMain$txbIteControlSymb',
-            'type': 'input'
-            },
+        'id': 'ctl00$ContentPlaceHolderSNRMain$txbIteControlSymb',
+        'type': 'input'
+    },
     'control_exclude': {
-            'id': 'ctl00$ContentPlaceHolderSNRMain$txbExIteControlSymb',
-            'type': 'input'
-            },
+        'id': 'ctl00$ContentPlaceHolderSNRMain$txbExIteControlSymb',
+        'type': 'input'
+    },
     'barcode': {
-            'id': 'ctl00$ContentPlaceHolderSNRMain$txbIteBarcode',
-            'type': 'input'
-            },
+        'id': 'ctl00$ContentPlaceHolderSNRMain$txbIteBarcode',
+        'type': 'input'
+    },
     'date_from': {
-            'id': 'ctl00$ContentPlaceHolderSNRMain$txbDateFrom',
-            'type': 'input'
-            },
+        'id': 'ctl00$ContentPlaceHolderSNRMain$txbDateFrom',
+        'type': 'input'
+    },
     'date_to': {
-            'id': 'ctl00$ContentPlaceHolderSNRMain$txbDateTo',
-            'type': 'input'
-            },
+        'id': 'ctl00$ContentPlaceHolderSNRMain$txbDateTo',
+        'type': 'input'
+    },
     # Select lists (options below)
     'formats': {
-            'id': 'ctl00$ContentPlaceHolderSNRMain$ddlPhysFormat',
-            'type': 'select'
-            },
+        'id': 'ctl00$ContentPlaceHolderSNRMain$ddlPhysFormat',
+        'type': 'select'
+    },
     'formats_exclude': {
-            'id': 'ctl00$ContentPlaceHolderSNRMain$ddlExPhysFormat',
-            'type': 'select'
-            },
+        'id': 'ctl00$ContentPlaceHolderSNRMain$ddlExPhysFormat',
+        'type': 'select'
+    },
     'locations': {
-            'id': 'ctl00$ContentPlaceHolderSNRMain$ddlLocation',
-            'type': 'select'
-            },
+        'id': 'ctl00$ContentPlaceHolderSNRMain$ddlLocation',
+        'type': 'select'
+    },
     'locations_exclude': {
-            'id': 'ctl00$ContentPlaceHolderSNRMain$ddlExLocation',
-            'type': 'select'
-            },
+        'id': 'ctl00$ContentPlaceHolderSNRMain$ddlExLocation',
+        'type': 'select'
+    },
     'access': {
-            'id': 'ctl00$ContentPlaceHolderSNRMain$ddlAccessStatus',
-            'type': 'select'
-            },
+        'id': 'ctl00$ContentPlaceHolderSNRMain$ddlAccessStatus',
+        'type': 'select'
+    },
     'access_exclude': {
-            'id': 'ctl00$ContentPlaceHolderSNRMain$ddlExAccessStatus',
-            'type': 'select'
-            },
+        'id': 'ctl00$ContentPlaceHolderSNRMain$ddlExAccessStatus',
+        'type': 'select'
+    },
     # Checkbox
     'digital': {
-            'id': 'ctl00_ContentPlaceHolderSNRMain_cbxDigitalCopies',
-            'type': 'checkbox'
-            }
+        'id': 'ctl00_ContentPlaceHolderSNRMain_cbxDigitalCopies',
+        'type': 'checkbox'
+    }
 }
 
 KW_OPTIONS = [
@@ -161,8 +162,10 @@ class RSClient:
 
     def _create_browser(self):
         self.br = mechanize.Browser()
-        self.br.addheaders = [('User-agent',
-            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_2) AppleWebKit/537.17 (KHTML, like Gecko) Chrome/24.0.1312.52 Safari/537.17')]
+        self.br.addheaders = [(
+            'User-agent'
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_2) AppleWebKit/537.17 (KHTML, like Gecko) Chrome/24.0.1312.52 Safari/537.17'
+        )]
         self.br.set_handle_robots(False)
         self.br.set_handle_equiv(True)
         self.br.set_handle_gzip(True)
@@ -170,7 +173,7 @@ class RSClient:
         self.br.set_handle_referer(True)
         self.br.set_handle_refresh(mechanize._http.HTTPRefreshProcessor(), max_time=1)
 
-    @retry(ServerError, tries=10, delay=1)
+    @retry(ServerError, tries=3, delay=1)
     def _get_url(self, url):
         try:
             response1 = self.br.open(url)
@@ -185,7 +188,6 @@ class RSClient:
             response2 = self.br.submit()
             return response2
         except mechanize.HTTPError as e:
-            print (e.code)
             if e.code == 503 or e.code == 504:
                 raise ServerError("Server didn't respond")
             else:
@@ -213,17 +215,17 @@ class RSClient:
         details = self._get_details(entity_id)
         try:
             cell = (
-                        details.find(text=re.compile(label))
-                        .parent.parent.findNextSiblings('td')[0]
-                    )
+                details.find(text=re.compile(label))
+                    .parent.parent.findNextSiblings('td')[0]
+            )
         except (IndexError, AttributeError):
             # Sometimes the cell labels are inside an enclosing div,
             # but sometimes not. Try again assuming no div.
             try:
                 cell = (
-                        details.find(text=re.compile(label))
+                    details.find(text=re.compile(label))
                         .parent.findNextSiblings('td')[0]
-                    )
+                )
             except (IndexError, AttributeError):
                 cell = None
         return cell
@@ -245,10 +247,10 @@ class RSClient:
             dates = utilities.process_date_string(date_str)
             if date_format == 'iso':
                 formatted_dates = {
-                                    'date_str': date_str,
-                                    'start_date': utilities.convert_date_to_iso(dates['start_date']),
-                                    'end_date': utilities.convert_date_to_iso(dates['end_date']),
-                                    }
+                    'date_str': date_str,
+                    'start_date': utilities.convert_date_to_iso(dates['start_date']),
+                    'end_date': utilities.convert_date_to_iso(dates['end_date']),
+                }
             elif date_format == 'obj':
                 formatted_dates = dates
         return formatted_dates
@@ -266,10 +268,10 @@ class RSClient:
                     dates = utilities.process_date_string(date_str)
                     if date_format == 'iso':
                         formatted_dates = {
-                                            'date_str': date_str,
-                                            'start_date': utilities.convert_date_to_iso(dates['start_date']),
-                                            'end_date': utilities.convert_date_to_iso(dates['end_date']),
-                                            }
+                            'date_str': date_str,
+                            'start_date': utilities.convert_date_to_iso(dates['start_date']),
+                            'end_date': utilities.convert_date_to_iso(dates['end_date']),
+                        }
                     elif date_format == 'obj':
                         formatted_dates = dates
                 details = [string for string in relation.find('div', 'linkagesInfo').stripped_strings]
@@ -280,13 +282,13 @@ class RSClient:
                     identifier = details[0]
                     title = details[0]
                 relations.append({
-                                    'date_str': formatted_dates['date_str'],
-                                    'start_date': formatted_dates['start_date'],
-                                    'end_date': formatted_dates['end_date'],
-                                    'identifier': identifier,
-                                    'title': title
-                                }
-                            )
+                    'date_str': formatted_dates['date_str'],
+                    'start_date': formatted_dates['start_date'],
+                    'end_date': formatted_dates['end_date'],
+                    'identifier': identifier,
+                    'title': title
+                }
+                )
         else:
             relations = None
         return relations
@@ -323,16 +325,16 @@ class RSItemClient(RSClient):
         location = self.get_location(entity_id)
 
         return {
-                'title': title,
-                'identifier': identifier,
-                'series': series,
-                'control_symbol': control_symbol,
-                'contents_dates': contents_dates,
-                'digitised_status': digitised_status,
-                'digitised_pages': digitised_pages,
-                'access_status': access_status,
-                'location': location
-            }
+            'title': title,
+            'identifier': identifier,
+            'series': series,
+            'control_symbol': control_symbol,
+            'contents_dates': contents_dates,
+            'digitised_status': digitised_status,
+            'digitised_pages': digitised_pages,
+            'access_status': access_status,
+            'location': location
+        }
 
     def get_title(self, entity_id=None):
         return self._get_value('Title', entity_id)
@@ -461,9 +463,9 @@ class RSSeriesClient(RSClient):
                 quantity = None
                 location = None
             locations.append({
-                                'quantity': quantity,
-                                'location': location
-                            })
+                'quantity': quantity,
+                'location': location
+            })
         return locations
 
     def get_previous_series(self, entity_id=None, date_format='obj'):
@@ -518,8 +520,8 @@ class RSAgencyClient(RSClient):
     def get_summary(self, entity_id=None, date_format='obj'):
         title = self.get_title(entity_id)
         return {
-                    'title': title
-            }
+            'title': title
+        }
 
     def get_identifier(self, entity_id=None):
         return self._get_value('Agency number', entity_id)
@@ -590,11 +592,11 @@ class RSSearchClient(RSItemClient):
         self.results = items
 
         return {
-                    'total_results': self.total_results,
-                    'page': self.page,
-                    'results_per_page': self.results_per_page,
-                    'results': items
-                }
+            'total_results': self.total_results,
+            'page': self.page,
+            'results_per_page': self.results_per_page,
+            'results': items
+        }
 
     def search_items(self, page=None, results_per_page=None, sort=None, **kwargs):
         '''
@@ -614,16 +616,17 @@ class RSSearchClient(RSItemClient):
         self.results = items
 
         return {
-                    'total_results': self.total_results,
-                    'page': self.page,
-                    'results_per_page': self.results_per_page,
-                    'results': items
-                }
+            'total_results': self.total_results,
+            'page': self.page,
+            'results_per_page': self.results_per_page,
+            'results': items
+        }
 
     def _get_name_search_form(self):
         url = 'http://recordsearch.naa.gov.au/scripts/Logon.asp?N=guest'
         self._get_url(url)
-        self.br.open('http://recordsearch.naa.gov.au/Scripts/SessionManagement/SessionManager.asp?Module=NameSearch&Location=home')
+        self.br.open(
+            'http://recordsearch.naa.gov.au/Scripts/SessionManagement/SessionManager.asp?Module=NameSearch&Location=home')
         self.br.select_form(nr=0)
         self.br.submit()
         self.br.select_form(name="NameSearchForm")
@@ -650,27 +653,27 @@ class RSSearchClient(RSItemClient):
         self.br.select_form(nr=0)
 
     def _process_page(self, html):
-            soup = BeautifulSoup(html)
-            # This will fail if there's only one result
-            # Also if there's more than 20000 results
-            if soup.find(id='ctl00_ContentPlaceHolderSNRMain_lblToManyRecordsError') is not None:
-                # Too many results
-                pass
-            elif soup.find(id=re.compile('tblItemDetails$')) is not None:
-                items = self._process_list(soup)
-                self.total_results = self.get_total_results(html)
-            elif soup.find(id=re.compile('ucItemDetails_phDetailsView$')) is not None:
-                self.details = soup.find('div', 'detailsTable')
-                items = [self.get_summary()]
-                self.total_results = 1
+        soup = BeautifulSoup(html)
+        # This will fail if there's only one result
+        # Also if there's more than 20000 results
+        if soup.find(id='ctl00_ContentPlaceHolderSNRMain_lblToManyRecordsError') is not None:
+            # Too many results
+            pass
+        elif soup.find(id=re.compile('tblItemDetails$')) is not None:
+            items = self._process_list(soup)
+            self.total_results = self.get_total_results(html)
+        elif soup.find(id=re.compile('ucItemDetails_phDetailsView$')) is not None:
+            self.details = soup.find('div', 'detailsTable')
+            items = [self.get_summary()]
+            self.total_results = 1
 
-            return items
+        return items
 
     def _process_list(self, soup):
         results = soup.find(
-                            'table',
-                            attrs={'id': re.compile('tblItemDetails$')}
-                            ).findAll('tr')[1:]
+            'table',
+            attrs={'id': re.compile('tblItemDetails$')}
+        ).findAll('tr')[1:]
         items = []
         for row in results:
             item = self._process_row(row)
@@ -708,10 +711,9 @@ class RSSearchClient(RSItemClient):
         if html:
             soup = BeautifulSoup(html)
             total = re.search(
-                                r'of (\d+)',
-                                soup.find('span', attrs={'id': re.compile('lblDisplaying$')}).string
-                            ).group(1)
+                r'of (\d+)',
+                soup.find('span', attrs={'id': re.compile('lblDisplaying$')}).string
+            ).group(1)
         else:
             total = self.total_results
         return total
-

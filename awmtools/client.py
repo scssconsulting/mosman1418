@@ -132,9 +132,7 @@ Roll of Honour
 
 
 class BaseClient:
-    """
-    Base class providing common methods, don't use this directly.
-    """
+    """Base class providing common methods, don't use this directly."""
 
     AWM_URL = 'http://www.awm.gov.au'
 
@@ -151,7 +149,7 @@ class BaseClient:
         except HTTPError as e:
             if e.code == 503 or e.code == 504:
                 raise ServerError("The server didn't respond")
-            elif e.code == 404:
+            elif 400 <= e.code < 500:
                 raise UsageError('Please provide a valid URL.')
             else:
                 raise
@@ -159,10 +157,7 @@ class BaseClient:
             return response
 
     def _get_soup(self, soup, url):
-        '''
-        Check to see if there's any soup. If not use the supplied url
-        to make some.
-        '''
+        """Check to see if there's any soup. If not use the supplied url to make some."""
         if not soup and not url:
             if self.soup is not None:
                 soup = self.soup

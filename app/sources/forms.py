@@ -1,6 +1,7 @@
 import re
 import json
 import datetime
+from urllib.error import URLError
 
 from urllib.request import urlopen
 
@@ -210,8 +211,15 @@ class AddSourceForm(DateSelectMixin, ModelForm):
             self._errors['url'] = self.error_class(['Not a valid Trove url'])
             return cleaned_data
         trove_url = 'http://api.trove.nla.gov.au/newspaper/%s?key=%s&encoding=json' % (gid, TROVE_API_KEY)
-        response = urlopen(trove_url)
-        data = json.load(response)
+        try:
+            response = urlopen(trove_url)
+            data = json.load(response)
+        except URLError as e:
+            self._errors['url'] = self.error_class(['Error accessing the url. Error: "{}"'.format(e.reason)])
+            return cleaned_data
+        except Exception as e:
+            self._errors['url'] = self.error_class(['Error accessing the url. Error: "{}"'.format(e)])
+            return cleaned_data
         source_type = SourceType.objects.get(label='newspaper article')
         cleaned_data['title'] = data['article']['heading']
         cleaned_data['collection_title'] = data['article']['title']['value']
@@ -241,7 +249,14 @@ class AddSourceForm(DateSelectMixin, ModelForm):
             return cleaned_data
         rs = RSItemClient()
         rsseries = RSSeriesClient()
-        item_details = rs.get_summary(barcode)
+        try:
+            item_details = rs.get_summary(barcode)
+        except URLError as e:
+            self._errors['url'] = self.error_class(['Error accessing the url. Error: "{}"'.format(e.reason)])
+            return cleaned_data
+        except Exception as e:
+            self._errors['url'] = self.error_class(['Error accessing the url. Error: "{}"'.format(e)])
+            return cleaned_data
         dates = item_details['contents_dates']
         citation = '{}, {}'.format(
             item_details['series'],
@@ -339,7 +354,14 @@ class AddSourceForm(DateSelectMixin, ModelForm):
         if awm is None:
             self.add_error('url', 'Not a valid AWM url.')
             return cleaned_data
-        details = awm.get_details(url=url)
+        try:
+            details = awm.get_details(url=url)
+        except URLError as e:
+            self._errors['url'] = self.error_class(['Error accessing the url. Error: "{}"'.format(e.reason)])
+            return cleaned_data
+        except Exception as e:
+            self._errors['url'] = self.error_class(['Error accessing the url. Error: "{}"'.format(e)])
+            return cleaned_data
         cleaned_data['details'] = details
         cleaned_data['title'] = details['title']
         cleaned_data['source_type'] = webpage_type
@@ -358,7 +380,14 @@ class AddSourceForm(DateSelectMixin, ModelForm):
         website_type = SourceType.objects.get(label='website')
         webpage_type = SourceType.objects.get(label='webpage')
         cwgc = CWGCClient()
-        details = cwgc.get_details(url)
+        try:
+            details = cwgc.get_details(url)
+        except URLError as e:
+            self._errors['url'] = self.error_class(['Error accessing the url. Error: "{}"'.format(e.reason)])
+            return cleaned_data
+        except Exception as e:
+            self._errors['url'] = self.error_class(['Error accessing the url. Error: "{}"'.format(e)])
+            return cleaned_data
         collection, created = Source.objects.get_or_create(
             title='Find War Dead',
             publisher=publisher,
