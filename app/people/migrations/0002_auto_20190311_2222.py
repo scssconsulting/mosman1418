@@ -11,38 +11,38 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveField(
-            model_name='alternativepersonname',
-            name='sources',
-        ),
-        migrations.RemoveField(
-            model_name='birth',
-            name='sources',
-        ),
-        migrations.RemoveField(
-            model_name='death',
-            name='sources',
-        ),
-        migrations.RemoveField(
-            model_name='lifeevent',
-            name='sources',
-        ),
-        migrations.RemoveField(
-            model_name='personaddress',
-            name='sources',
-        ),
-        migrations.RemoveField(
-            model_name='personassociatedorganisation',
-            name='sources',
-        ),
-        migrations.RemoveField(
-            model_name='personassociatedperson',
-            name='sources',
-        ),
-        migrations.RemoveField(
-            model_name='rank',
-            name='sources',
-        ),
+        # migrations.RemoveField(
+        #     model_name='alternativepersonname',
+        #     name='sources',
+        # ),
+        # migrations.RemoveField(
+        #     model_name='birth',
+        #     name='sources',
+        # ),
+        # migrations.RemoveField(
+        #     model_name='death',
+        #     name='sources',
+        # ),
+        # migrations.RemoveField(
+        #     model_name='lifeevent',
+        #     name='sources',
+        # ),
+        # migrations.RemoveField(
+        #     model_name='personaddress',
+        #     name='sources',
+        # ),
+        # migrations.RemoveField(
+        #     model_name='personassociatedorganisation',
+        #     name='sources',
+        # ),
+        # migrations.RemoveField(
+        #     model_name='personassociatedperson',
+        #     name='sources',
+        # ),
+        # migrations.RemoveField(
+        #     model_name='rank',
+        #     name='sources',
+        # ),
         migrations.RemoveField(
             model_name='servicenumber',
             name='sources',
