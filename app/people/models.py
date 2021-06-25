@@ -48,7 +48,9 @@ class Person(GenericPerson):
                 display = self.family_name
         elif self.display_name:
             display = self.display_name
-        display = '{} {}'.format(display, self.name_suffix).strip()
+
+        if self.name_suffix:
+            display = '{} {}'.format(display, self.name_suffix)
         return display
 
     def alpha_name(self):
