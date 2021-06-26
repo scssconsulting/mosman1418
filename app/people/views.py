@@ -83,7 +83,7 @@ class PersonListView(LinkedDataListView):
     model = Person
     path = '/people/{}results'
     template_name = 'people/people'
-    browse_field = 'other_names'
+    browse_field = 'family_name'
     queryset = Person.objects.filter(status='confirmed').filter(merged_into__isnull=True)
 
     def make_graph(self, entities):
