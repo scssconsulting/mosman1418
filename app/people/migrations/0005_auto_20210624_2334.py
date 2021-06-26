@@ -41,5 +41,9 @@ class Migration(migrations.Migration):
         migrations.RemoveField(
             model_name='rank',
             name='sources',
-        )
+        ),
+        migrations.RemoveField(
+            model_name='servicenumber',
+            name='sources',
+        ),
     ]

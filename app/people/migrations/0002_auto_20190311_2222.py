@@ -43,10 +43,10 @@ class Migration(migrations.Migration):
         #     model_name='rank',
         #     name='sources',
         # ),
-        migrations.RemoveField(
-            model_name='servicenumber',
-            name='sources',
-        ),
+        # migrations.RemoveField(
+        #     model_name='servicenumber',
+        #     name='sources',
+        # ),
         migrations.AddField(
             model_name='alternativepersonname',
             name='memorials',
